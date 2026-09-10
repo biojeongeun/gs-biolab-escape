@@ -15,6 +15,7 @@ import {
   START_LABEL,
   CHAR_SELECT_LABEL,
   CREDIT,
+  CREDIT_URL,
   CONTACT_EMAIL,
   CONTACT_CATEGORIES,
 } from "./config";
@@ -183,8 +184,11 @@ function showTitle(app: HTMLElement): void {
 
   const footer = document.createElement("div");
   footer.className = "title-footer";
-  const credit = document.createElement("div");
+  const credit = document.createElement("a");
   credit.className = "title-credit";
+  credit.href = CREDIT_URL;
+  credit.target = "_blank";
+  credit.rel = "noopener";
   credit.textContent = CREDIT;
   const contact = document.createElement("button");
   contact.className = "title-contact";

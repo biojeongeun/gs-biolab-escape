@@ -113,6 +113,11 @@ body {
   color: color-mix(in srgb, var(--color-text) 55%, transparent);
   font-size: 0.75rem;
   letter-spacing: 0.08em;
+  text-decoration: none;
+}
+
+.title-credit:hover {
+  text-decoration: underline;
 }
 
 .title-contact {

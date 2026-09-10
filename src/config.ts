@@ -17,6 +17,9 @@ export const CHAR_SELECT_LABEL = "관측 대상을 선택하라";
 /** 타이틀 하단 제작자 표기 */
 export const CREDIT = "made by 청학고 도쌤";
 
+/** 제작자 표기를 눌렀을 때 열리는 주소. 킷을 받아 쓰는 사람은 자기 주소로 바꾼다. */
+export const CREDIT_URL = "https://dossamlink.vercel.app";
+
 /** 문의하기 — 메일 폴백 주소와 분류. 두 번째 항목이 교과 질문 자리다. */
 export const CONTACT_EMAIL = "dossamlab@gmail.com";
 export const CONTACT_CATEGORIES = [
