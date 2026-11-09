@@ -1,0 +1,37 @@
+{
+  "id": "photo-panel",
+  "title": "광합성 패널 — 엽록체 회로",
+  "act": 3,
+  "concept": "명반응과 탄소 고정 반응",
+  "curriculum": {
+    "과목": "세포와 물질대사",
+    "단원": "III. 세포호흡과 광합성 — 광합성",
+    "성취기준": "(코드 검증 예정) 광합성의 명반응과 탄소 고정 반응 과정을 물질 변화와 에너지 전환 관점에서 설명할 수 있다"
+  },
+  "narrative": {
+    "intro": "story.md#photo-panel-intro",
+    "clear": "story.md#photo-panel-clear",
+    "notes": []
+  },
+  "trigger": {
+    "map": "qz-2",
+    "objectId": "photo-panel"
+  },
+  "reward": {
+    "event": "code:photo-panel-solved"
+  },
+  "testIds": {
+    "root": "puzzle-photo-panel",
+    "solveCheck": "lq-step-1"
+  },
+  "principle": [
+    "명반응(타이라코이드 막): 광계가 빛 흡수 → 물의 광분해로 산소 발생 → ATP·NADPH 생성.",
+    "탄소 고정 반응(스트로마): 명반응의 ATP·NADPH로 이산화 탄소를 고정한다 — 빛이 직접 필요하지 않다.",
+    "광계는 광계 Ⅰ과 광계 Ⅱ — 보안코드 3번 자리 [2]."
+  ],
+  "hints": [
+    "빛이 먼저다.",
+    "산소의 산소 원자는 물에서 온다.",
+    "Ⅰ과 Ⅱ."
+  ]
+}

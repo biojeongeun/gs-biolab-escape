@@ -1,0 +1,37 @@
+{
+  "id": "news-opto",
+  "title": "뉴스 아카이브 ① — 2026 노벨 생리의학상",
+  "act": 3,
+  "concept": "광유전학 (빛으로 여닫히는 이온 통로)",
+  "curriculum": {
+    "과목": "최신 생명과학 뉴스 (교과 연계: 생명과학 II단원 흥분의 발생)",
+    "단원": "히든 스테이지",
+    "성취기준": "교과 외 심화 — 2026-11-06 웹 확인: 2026-10-05 발표, Deisseroth·Hegemann·Nagel, 'light-gated ion channels and optogenetics'"
+  },
+  "narrative": {
+    "intro": "story.md#news-opto-intro",
+    "clear": "story.md#news-opto-clear",
+    "notes": []
+  },
+  "trigger": {
+    "map": "qz-hidden",
+    "objectId": "news-opto"
+  },
+  "reward": {
+    "event": "code:news-opto-solved"
+  },
+  "testIds": {
+    "root": "puzzle-news-opto",
+    "solveCheck": "lq-step-1"
+  },
+  "principle": [
+    "2026 노벨 생리의학상: 다이서로스·헤게만·나겔 — 빛으로 여닫히는 이온 통로와 광유전학.",
+    "녹조류 클라미도모나스의 빛 감지 단백질에서 출발했다.",
+    "양이온 유입 → 탈분극 → 활동전위. 수상자 세 명 — 보안코드 1번 자리 [3]."
+  ],
+  "hints": [
+    "'광' + '유전학'.",
+    "빛을 향해 헤엄치는 작은 초록 생물.",
+    "3-1에서 Na⁺가 들어올 때 무슨 일이 있었나?"
+  ]
+}

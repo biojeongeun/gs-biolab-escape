@@ -1,0 +1,37 @@
+{
+  "id": "news-treg",
+  "title": "뉴스 아카이브 ② — 2025 노벨 생리의학상",
+  "act": 3,
+  "concept": "말초 면역 관용 — 조절 T세포와 Foxp3",
+  "curriculum": {
+    "과목": "최신 생명과학 뉴스 (교과 연계: 생명과학 방어 작용)",
+    "단원": "히든 스테이지",
+    "성취기준": "교과 외 심화 — 웹 확인: 2025-10-06 발표, 브런코·램스델·사카구치, 말초 면역 관용"
+  },
+  "narrative": {
+    "intro": "story.md#news-treg-intro",
+    "clear": "story.md#news-treg-clear",
+    "notes": []
+  },
+  "trigger": {
+    "map": "qz-hidden",
+    "objectId": "news-treg"
+  },
+  "reward": {
+    "event": "code:news-treg-solved"
+  },
+  "testIds": {
+    "root": "puzzle-news-treg",
+    "solveCheck": "lq-step-1"
+  },
+  "principle": [
+    "2025 노벨 생리의학상: 말초 면역 관용 — 조절 T세포가 자기 몸을 공격하는 면역 반응을 억제한다.",
+    "핵심 유전자 Foxp3.",
+    "항체(IgG)는 Y자 모양, 항원 결합 부위 2개 — 보안코드 2번 자리 [2]."
+  ],
+  "hints": [
+    "면역 반응을 '조절'한다.",
+    "F로 시작한다.",
+    "Y자의 팔 개수."
+  ]
+}

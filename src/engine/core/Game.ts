@@ -11,6 +11,7 @@ import { showDialogue, isDialogueBusy } from "../narrative/dialogue";
 import { showNote } from "../narrative/note";
 import { showDiscovery } from "../narrative/discovery";
 import { openKeypad } from "../ui/keypad";
+import { CodeBar } from "../ui/codebar";
 import { ITEMS } from "../../data/items";
 import {
   ENDING_SUB,
@@ -109,6 +110,12 @@ export class Game {
   private totalNotes = 0;
   private allNotes: NoteMeta[] = [];
   private noteCounter!: HTMLElement;
+  /** 화면 상단 보안코드 입력줄 (맵에 codeSlots가 있을 때만) */
+  private codebar: CodeBar | null = null;
+  /** 이동 속도 배율 — 'player:speed' 이벤트로 바뀐다 (3막: ATP 고갈 시 느려짐) */
+  private speedScale = 1;
+  /** 'player:collapse' 시각 — null이 아니면 캐릭터가 쓰러진 채로 그려지고 움직이지 않는다 */
+  private collapseAt: number | null = null;
 
   constructor(
     private host: HTMLElement,
@@ -198,6 +205,18 @@ export class Game {
       this.lit = true;
     }
     this.syncSeals(map);
+    this.buildCodebar();
+    this.detachers.push(
+      bus.on<number>("player:speed", (k) => {
+        if (this.collapseAt !== null) return;
+        this.speedScale = typeof k === "number" && k > 0 ? k : 1;
+      }),
+      // 쓰러짐 (STAGE 3 GAME OUT) — 이동을 막고 캐릭터를 옆으로 눕힌다
+      bus.on("player:collapse", () => {
+        this.collapseAt = performance.now();
+        this.speedScale = 0.0001;
+      }),
+    );
 
     // 모든 진행 이벤트(퍼즐 보상·게이트 해금·점등·문 해금)를 한 번에 구독 — 발화 시 저장
     const watch = new Set<string>();
@@ -211,6 +230,7 @@ export class Game {
       for (const o of m.objects)
         if (o.door?.requiresEvent)
           for (const ev of [o.door.requiresEvent].flat()) watch.add(ev);
+      for (const o of m.objects) if (o.codeLock) watch.add(o.codeLock.event);
     }
     watch.forEach((ev) =>
       bus.on(ev, () => {
@@ -235,6 +255,7 @@ export class Game {
           )
         )
           Sfx.lightsOn();
+        this.syncCodebar();
         this.persist();
       }),
     );
@@ -307,6 +328,31 @@ export class Game {
     );
   }
 
+  /** 맵의 codeSlots에 맞춰 상단 보안코드 입력줄을 (다시) 만든다 */
+  private buildCodebar(): void {
+    this.codebar?.el.remove();
+    this.codebar = this.map.codeSlots
+      ? new CodeBar(this.ui, this.map.codeSlots)
+      : null;
+    this.syncCodebar();
+  }
+
+  /** 퍼즐 보상 이벤트가 발화한 단서 장치의 자리에 '찾음' 점을 켠다 */
+  private syncCodebar(): void {
+    if (!this.codebar) return;
+    for (const o of this.map.objects) {
+      if (o.clue) this.codebar.setFound(o.clue.slot - 1, this.isPuzzleSolved(o));
+      if (o.codeLock && this.firedEvents.has(o.codeLock.event))
+        this.codebar.showSolved(o.codeLock.code);
+    }
+  }
+
+  /** 이 장치의 퍼즐이 풀렸는가 (reward.event 발화 여부) */
+  private isPuzzleSolved(o: MapObject): boolean {
+    const p = o.puzzleId ? findPuzzle(o.puzzleId) : undefined;
+    return !!p && this.firedEvents.has(p.manifest.reward.event);
+  }
+
   private syncNoteCounter(): void {
     this.noteCounter.textContent = `연구노트 ${this.collectedNotes.size} / ${this.totalNotes}`;
   }
@@ -320,6 +366,17 @@ export class Game {
       lastMap: this.map.id,
       character: this.gender,
     });
+  }
+
+  /**
+   * 엔진 밖(main.ts)이 방을 바꿀 때 — 문의 `door.emit` 뒤에 쓴다.
+   * emit 문은 dialogueOpen을 쥔 채 끝나므로 여기서 풀어 준다.
+   */
+  enterMap(mapId: string): void {
+    const next = maps[mapId];
+    if (!next) return;
+    this.switchMap(mapId, next.spawn);
+    this.dialogueOpen = false;
   }
 
   private switchMap(toMap: string, spawn: [number, number]): void {
@@ -340,6 +397,7 @@ export class Game {
       this.lit = true;
     }
     this.syncSeals(next);
+    this.buildCodebar();
     this.persist();
     bus.emit(`map:enter:${next.id}`);
   }
@@ -531,7 +589,12 @@ export class Game {
     this.nearObject = best;
 
     // 대사·퍼즐·저널 중엔 이동 정지 (스토리 진행 대사 포함 — isDialogueBusy)
-    if (this.dialogueOpen || isDialogueBusy() || this.isJournalOpen()) {
+    if (
+      this.dialogueOpen ||
+      isDialogueBusy() ||
+      this.isJournalOpen() ||
+      this.codebar?.isActive()
+    ) {
       this.moving = false;
       this.walkPhase = 0;
       return;
@@ -552,11 +615,11 @@ export class Game {
         const y0 = this.player.y;
         const nx = Math.min(
           this.map.cols - 1 - margin,
-          Math.max(margin, x0 + wx * PLAYER_SPEED * dt),
+          Math.max(margin, x0 + wx * PLAYER_SPEED * this.speedScale * dt),
         );
         const ny = Math.min(
           this.map.rows - 1 - margin,
-          Math.max(margin, y0 + wy * PLAYER_SPEED * dt),
+          Math.max(margin, y0 + wy * PLAYER_SPEED * this.speedScale * dt),
         );
         if (!this.isBlocked(nx, this.player.y)) this.player.x = nx;
         if (!this.isBlocked(this.player.x, ny)) this.player.y = ny;
@@ -602,6 +665,7 @@ export class Game {
       this.dialogueOpen ||
       isDialogueBusy() ||
       this.isJournalOpen() ||
+      this.codebar?.isActive() ||
       !this.nearObject
     )
       return;
@@ -645,6 +709,31 @@ export class Game {
 
     // 문: 잠김이면 안내 대사, 엔딩 문이면 에필로그, 아니면 방 이동
     if (obj.door) {
+      // 보안코드 문: 잠겨 있으면 상단 입력줄을 활성화 — 모달 키패드 대신 숫자 키 입력
+      if (this.isDoorLocked(obj) && obj.codeLock && this.codebar) {
+        const lock = obj.codeLock;
+        void showDialogue(obj.interactAnchor ?? "#sys-door-locked", this.ui)
+          .then(() =>
+            this.codebar!.activate(lock.code, () => {
+              sessionStats.addFail();
+              bus.emit("code:wrong", obj.id);
+            }),
+          )
+          .then((ok) => {
+            this.dialogueOpen = false;
+            if (ok) {
+              bus.emit(lock.event);
+              this.tryInteract(); // 열린 문을 바로 통과
+            }
+          });
+        return;
+      }
+      if (!this.isDoorLocked(obj) && obj.door.emit) {
+        Sfx.door();
+        bus.emit(obj.door.emit, obj.id);
+        // dialogueOpen 유지 — 다음 화면은 엔진 밖(main.ts)이 정한다
+        return;
+      }
       if (this.isDoorLocked(obj)) {
         Sfx.error();
         void showDialogue(
@@ -665,6 +754,14 @@ export class Game {
     }
 
     const puzzle = obj.puzzleId ? findPuzzle(obj.puzzleId) : undefined;
+
+    // 이미 푼 장치: 단서(보안코드 숫자) 대사를 다시 들려준다
+    if (puzzle && obj.solvedAnchor && this.isPuzzleSolved(obj)) {
+      void showDialogue(obj.solvedAnchor, this.ui).then(() => {
+        this.dialogueOpen = false;
+      });
+      return;
+    }
 
     // 방탈출 게이트: 해금 전에는 키패드(코드형) 또는 잠김 대사(아이템형 미충족)
     const gate = puzzle?.manifest.gate;
@@ -976,7 +1073,8 @@ export class Game {
   private render(): void {
     const ctx = this.ctx;
     const [w, h] = this.viewSize();
-    ctx.fillStyle = tokens.color["bg-void"];
+    const voidKey = (this.map.voidColor ?? "bg-void") as keyof typeof tokens.color;
+    ctx.fillStyle = tokens.color[voidKey] ?? tokens.color["bg-void"];
     ctx.fillRect(0, 0, w, h);
 
     const [ox, oy] = this.cameraOffset();
@@ -1356,6 +1454,16 @@ export class Game {
           // 고해상도 일러스트 캐릭터를 그 상태로 축소하면 가장자리가 계단처럼 부서진다.
           // (배경이 매끈한 카툰 아트일 때 캐릭터만 도트로 튀는 문제 — 2026-08-11)
           ctx.imageSmoothingEnabled = true;
+          if (this.collapseAt !== null) {
+            // 발끝을 축으로 0.7초 동안 옆으로 쓰러진다 (가속 — 툭 꺾이는 느낌)
+            const k = Math.min(1, (performance.now() - this.collapseAt) / 700);
+            ctx.save();
+            ctx.translate(Math.round(ox + sx), Math.round(oy + sy + 8));
+            ctx.rotate((-Math.PI / 2) * k * k);
+            ctx.drawImage(img, -w / 2, -h, w, h);
+            ctx.restore();
+            return;
+          }
           ctx.drawImage(
             img,
             Math.round(ox + sx - w / 2),
@@ -1432,60 +1540,111 @@ export class Game {
     // ⚠ **노트도 여기 걸린다.** 노트 핫스팟은 스프라이트가 없어(배경 그림의 가구를
     // 가리키는 설계) 마커까지 없으면 화면에 아무 표시도 남지 않는다 — 빈 바닥에 놓인
     // 노트는 붙어서 라벨이 뜨기 전까지 보이지 않았다(제보 2026-08-18).
+    // 조사 가능 표시 — 아직 안 푼 장치·안 본 수색 지점·안 읽은 노트·잠긴 보안코드 문 위에
+    // 노란 느낌표(!) 배지. 푼 단서 장치에는 대신 보안코드 숫자 배지(`1번 = 3`).
+    // 어둠 오버레이 위에 그려 암실에서도 "저기 뭔가 있다"가 보인다.
     {
       const t = performance.now() / 1000;
+      const near = this.nearObject && !this.dialogueOpen ? this.nearObject : null;
       for (const obj of this.map.objects) {
+        if (obj.range <= 0) continue; // 장식 오브젝트
+        if (!this.debugGrid && this.isSealed(obj.tile[0], obj.tile[1])) continue;
+        const solved = this.isPuzzleSolved(obj);
         const pending = obj.search
           ? !this.searched.has(obj.id)
-          : !!obj.noteId && !this.collectedNotes.has(obj.noteId);
-        if (!pending) continue;
-        // 스파클은 어둠 오버레이 위에 그려지므로 덮개로 가려지지 않는다 — 알파와 무관하게
-        // 페이드가 끝날 때까지 숨긴다(봉인 뒤에서 반짝임이 새어 나오던 문제).
-        if (!this.debugGrid && this.isSealed(obj.tile[0], obj.tile[1]))
-          continue;
+          : obj.noteId
+            ? !this.collectedNotes.has(obj.noteId)
+            : obj.codeLock
+              ? this.isDoorLocked(obj)
+              : !!obj.puzzleId && !solved;
         const [sx, sy] = worldToScreen(obj.tile[0], obj.tile[1]);
-        const objImg = obj.sprite ? this.sprites[obj.sprite] : undefined;
-        const cy =
-          oy +
-          sy -
-          (objImg ? objImg.height * (objImg.gameScale ?? 1) * 0.7 : 40);
-        const cx = ox + sx + 18;
-        const pulse = 0.45 + 0.55 * Math.abs(Math.sin(t * 2.2 + sx * 0.01));
-        ctx.save();
-        ctx.globalAlpha = pulse;
-        ctx.strokeStyle = tokens.color["success"];
-        // 마커 자체는 화면 기준 크기 유지 — 줌 아웃해도 눈에 띄어야 한다
-        ctx.lineWidth = 2 / CAMERA_ZOOM;
-        const r = (5 + 2 * pulse) / CAMERA_ZOOM;
-        ctx.beginPath();
-        ctx.moveTo(cx - r, cy);
-        ctx.lineTo(cx + r, cy);
-        ctx.moveTo(cx, cy - r);
-        ctx.lineTo(cx, cy + r);
-        ctx.stroke();
-        ctx.globalAlpha = pulse * 0.6;
-        ctx.beginPath();
-        ctx.arc(cx, cy, r * 0.45, 0, Math.PI * 2);
-        ctx.fillStyle = tokens.color["success"];
-        ctx.fill();
-        ctx.restore();
+        const top = this.objectTop(obj, oy + sy);
+        const cx = ox + sx;
+        if (obj.clue && solved) {
+          this.drawClueBadge(ctx, cx, top - 30 / CAMERA_ZOOM, obj.clue);
+          continue;
+        }
+        if (!pending || obj === near) continue; // 가까이 서면 ! 대신 [E] 키캡
+        const bob = this.reduceMotion ? 0 : Math.sin(t * 3 + sx * 0.01) * (4 / CAMERA_ZOOM);
+        this.drawBang(ctx, cx, top - 26 / CAMERA_ZOOM + bob);
       }
     }
 
-    // 상호작용 라벨 (DOM — 캔버스 위 오버레이)
-    if (this.nearObject && !this.dialogueOpen) {
+    // 상호작용 키캡 배지 (DOM — 캔버스 위 오버레이): 장치 바로 위에 [E]만
+    if (this.nearObject && !this.dialogueOpen && !this.codebar?.isActive()) {
       const obj = this.nearObject;
-      const img = obj.sprite ? this.sprites[obj.sprite] : undefined;
       const [sx, sy] = worldToScreen(obj.tile[0], obj.tile[1]);
-      const hint = this.joystick ? "ACT" : "Space/E";
-      this.label.textContent = `${obj.name} (${hint} 상호작용)`;
+      const key = this.joystick ? "ACT" : "E";
+      if (this.label.dataset.key !== key) {
+        this.label.dataset.key = key;
+        this.label.replaceChildren(Object.assign(document.createElement("kbd"), { textContent: key }));
+      }
+      this.label.title = obj.name;
       // 라벨은 DOM(실제 화면 px) — 줌 좌표를 화면 좌표로 되돌린다
-      const ly = oy + sy - (img ? img.height * (img.gameScale ?? 1) : 72);
+      // 단서 배지(`1번 = 3`)가 떠 있으면 그 위로 비켜 선다
+      const lift = obj.clue && this.isPuzzleSolved(obj) ? 52 : 8;
+      const ly = this.objectTop(obj, oy + sy) - lift / CAMERA_ZOOM;
       this.label.style.left = `${(ox + sx) * CAMERA_ZOOM}px`;
       this.label.style.top = `${ly * CAMERA_ZOOM}px`;
       this.label.hidden = false;
     } else {
       this.label.hidden = true;
     }
+  }
+
+  /** 오브젝트 머리 위 y(줌 좌표) — 스프라이트가 있으면 그 윗변, 없으면 바닥에서 고정 높이 */
+  private objectTop(obj: MapObject, footY: number): number {
+    const img = obj.sprite ? this.sprites[obj.sprite] : undefined;
+    // 스프라이트 없는 핫스팟은 대개 벽 그림(문·스크린·창)을 가리킨다 — 벽 높이쯤에 띄운다
+    if (!img) return footY - (obj.door ? 330 : obj.search || obj.noteId ? 250 : 120);
+    return footY + TILE_H / 4 + (obj.sink ?? 0) - img.height * (img.gameScale ?? 1);
+  }
+
+  /** 노란 느낌표 배지 (화면 기준 크기 유지) */
+  private drawBang(ctx: CanvasRenderingContext2D, cx: number, cy: number): void {
+    const r = 13 / CAMERA_ZOOM;
+    ctx.save();
+    ctx.shadowColor = "rgba(255, 209, 102, 0.85)";
+    ctx.shadowBlur = 14 / CAMERA_ZOOM;
+    ctx.fillStyle = tokens.color["success"];
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.lineWidth = 2.5 / CAMERA_ZOOM;
+    ctx.strokeStyle = tokens.color["keycap"];
+    ctx.stroke();
+    ctx.fillStyle = tokens.color["keycap"];
+    ctx.font = `900 ${20 / CAMERA_ZOOM}px ${tokens.font.family}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("!", cx, cy + 1 / CAMERA_ZOOM);
+    ctx.restore();
+  }
+
+  /** 보안코드 단서 배지 — `1번 = 3` */
+  private drawClueBadge(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    clue: { slot: number; digit: string },
+  ): void {
+    const text = `${clue.slot}번 = ${clue.digit}`;
+    ctx.save();
+    ctx.font = `800 ${15 / CAMERA_ZOOM}px ${tokens.font.family}`;
+    const w = ctx.measureText(text).width + 18 / CAMERA_ZOOM;
+    const h = 26 / CAMERA_ZOOM;
+    ctx.fillStyle = "rgba(10, 14, 20, 0.82)";
+    ctx.strokeStyle = tokens.color["toxic"];
+    ctx.lineWidth = 2 / CAMERA_ZOOM;
+    ctx.beginPath();
+    ctx.roundRect(cx - w / 2, cy - h / 2, w, h, 6 / CAMERA_ZOOM);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = tokens.color["toxic"];
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, cx, cy + 1 / CAMERA_ZOOM);
+    ctx.restore();
   }
 }

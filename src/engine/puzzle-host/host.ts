@@ -182,6 +182,8 @@ export function openPuzzle(module: PuzzleModule, host: HTMLElement): Promise<boo
         failCount += 1;
         sessionStats.addFail();
         syncHintLock();
+        // 방 수준 연출(3막: 오답마다 좀비가 다가온다)이 구독한다
+        bus.emit("puzzle:fail", module.manifest.id);
       },
       tokens: tokens as Record<string, unknown>,
     });

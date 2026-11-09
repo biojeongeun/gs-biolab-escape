@@ -1,0 +1,37 @@
+{
+  "id": "nerve-relay",
+  "title": "신경 신호 중계기 — 활동전위 복구",
+  "act": 3,
+  "concept": "활동전위와 도약전도",
+  "curriculum": {
+    "과목": "생명과학",
+    "단원": "II. 항상성과 몸의 조절 — 흥분의 발생과 전도",
+    "성취기준": "(코드 검증 예정) 신경세포에서 활동전위가 발생하고 전도되는 과정을 설명할 수 있다"
+  },
+  "narrative": {
+    "intro": "story.md#nerve-relay-intro",
+    "clear": "story.md#nerve-relay-clear",
+    "notes": []
+  },
+  "trigger": {
+    "map": "qz-1",
+    "objectId": "nerve-relay"
+  },
+  "reward": {
+    "event": "code:nerve-relay-solved"
+  },
+  "testIds": {
+    "root": "puzzle-nerve-relay",
+    "solveCheck": "lq-step-1"
+  },
+  "principle": [
+    "휴지전위 → Na⁺ 유입으로 탈분극 → K⁺ 유출로 재분극 → 과분극 뒤 휴지전위 회복.",
+    "말이집신경에서는 랑비에결절에서만 활동전위가 건너뛰어 발생한다 — 도약전도. 그래서 민말이집신경보다 전도 속도가 빠르다.",
+    "보안코드 1번 자리 [5] — 랑비에결절 5군데."
+  ],
+  "hints": [
+    "먼저 양이온이 '들어오고', 그다음 '나간다'.",
+    "말이집은 전기가 통하지 않는 절연체다.",
+    "활동전위는 말이집이 없는 곳에서만 생긴다."
+  ]
+}

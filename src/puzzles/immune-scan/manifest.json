@@ -1,0 +1,37 @@
+{
+  "id": "immune-scan",
+  "title": "면역 분석 단말 — 방어 작용",
+  "act": 3,
+  "concept": "체액성면역, 2차 면역반응, ABO식 혈액형",
+  "curriculum": {
+    "과목": "생명과학",
+    "단원": "II. 항상성과 몸의 조절 — 방어 작용",
+    "성취기준": "(코드 검증 예정) 특이적 방어 작용에서 항원항체반응과 1차·2차 면역반응을 설명하고, 혈액형을 항원항체반응으로 설명할 수 있다"
+  },
+  "narrative": {
+    "intro": "story.md#immune-scan-intro",
+    "clear": "story.md#immune-scan-clear",
+    "notes": []
+  },
+  "trigger": {
+    "map": "qz-1",
+    "objectId": "immune-scan"
+  },
+  "reward": {
+    "event": "code:immune-scan-solved"
+  },
+  "testIds": {
+    "root": "puzzle-immune-scan",
+    "solveCheck": "lq-step-1"
+  },
+  "principle": [
+    "항원제시세포 → 보조 T림프구 활성화 → B림프구 증식·분화 → 형질세포가 항체 생성(일부는 기억세포).",
+    "같은 항원의 2차 침입 때 기억세포 덕분에 항체가 빨리, 많이 만들어진다 — 2차 면역반응.",
+    "B형은 응집원 B 한 종류, 혈장에는 응집소 α. 보안코드 3번 자리 [1]."
+  ],
+  "hints": [
+    "항체를 직접 만드는 세포는 맨 마지막이다.",
+    "백신은 이 반응을 노린다.",
+    "B형 적혈구 표면에는 B만 있다."
+  ]
+}

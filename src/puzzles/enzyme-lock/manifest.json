@@ -1,0 +1,37 @@
+{
+  "id": "enzyme-lock",
+  "title": "효소 반응 제어기 — 억제제 분석",
+  "act": 3,
+  "concept": "효소와 활성화에너지, 경쟁적·비경쟁적 억제제",
+  "curriculum": {
+    "과목": "세포와 물질대사",
+    "단원": "II. 물질대사와 에너지 — 효소",
+    "성취기준": "(코드 검증 예정) 효소가 활성화에너지를 낮추는 원리와 억제제가 효소 작용에 미치는 영향을 설명할 수 있다"
+  },
+  "narrative": {
+    "intro": "story.md#enzyme-lock-intro",
+    "clear": "story.md#enzyme-lock-clear",
+    "notes": []
+  },
+  "trigger": {
+    "map": "qz-2",
+    "objectId": "enzyme-lock"
+  },
+  "reward": {
+    "event": "code:enzyme-lock-solved"
+  },
+  "testIds": {
+    "root": "puzzle-enzyme-lock",
+    "solveCheck": "lq-step-1"
+  },
+  "principle": [
+    "효소는 활성화에너지를 낮춰 반응 속도를 높인다.",
+    "경쟁적 억제제는 기질과 활성부위를 두고 경쟁(기질 농도↑ → 억제 효과↓), 비경쟁적 억제제는 다른 부위에 결합한다.",
+    "효소는 반응 후에도 변하지 않고 재사용된다 — 보안코드 2번 자리 [0]."
+  ],
+  "hints": [
+    "효소는 언덕(에너지 장벽)을 낮춘다.",
+    "'경쟁'하려면 같은 자리를 노려야 한다.",
+    "효소는 반응물이 아니다."
+  ]
+}

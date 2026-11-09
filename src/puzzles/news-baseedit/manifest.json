@@ -1,0 +1,37 @@
+{
+  "id": "news-baseedit",
+  "title": "뉴스 아카이브 ③ — 세계 첫 맞춤형 유전자 편집 치료",
+  "act": 3,
+  "concept": "환자 맞춤형 생체 내 염기 편집 (CPS1 결핍증)",
+  "curriculum": {
+    "과목": "최신 생명과학 뉴스 (교과 연계: 생물의 유전 III. 생명공학기술)",
+    "단원": "히든 스테이지",
+    "성취기준": "교과 외 심화 — 웹 확인: NEJM 2025-05-15 Musunuru 외, 아기 KJ, 지질 나노입자로 간에 전달한 맞춤형 염기 편집"
+  },
+  "narrative": {
+    "intro": "story.md#news-baseedit-intro",
+    "clear": "story.md#news-baseedit-clear",
+    "notes": []
+  },
+  "trigger": {
+    "map": "qz-hidden",
+    "objectId": "news-baseedit"
+  },
+  "reward": {
+    "event": "code:news-baseedit-solved"
+  },
+  "testIds": {
+    "root": "puzzle-news-baseedit",
+    "solveCheck": "lq-step-1"
+  },
+  "principle": [
+    "2025년 세계 첫 환자 맞춤형 생체 내 염기 편집 치료 — 아기 KJ의 CPS1 결핍증.",
+    "지질 나노입자에 담아 간으로 전달했다 — 요소 회로가 일어나는 곳.",
+    "단 한 명을 위해 설계된 치료 — 보안코드 3번 자리 [1]."
+  ],
+  "hints": [
+    "유전자 가위의 정밀한 사촌.",
+    "암모니아를 요소로 바꾸는 기관.",
+    "'맞춤형'."
+  ]
+}

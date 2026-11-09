@@ -19,5 +19,11 @@
   "monochord": 2,
   "sonic-console": 2,
   "speaker-cab": 2,
-  "floor-hatch": 2
+  "floor-hatch": 2,
+  "dev-microscope": 2,
+  "dev-sequencer": 2,
+  "dev-mito": 2,
+  "dev-pedigree": 2,
+  "dev-immune": 2,
+  "dev-ecotank": 2
 }

@@ -1,0 +1,219 @@
+/* 생명과학 연구소 퍼즐 공용 — 색은 전부 :root 토큰 변수 (hex 금지) */
+.lq {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  font-size: 0.95rem;
+}
+.lq-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  opacity: 0.85;
+}
+.lq-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border-radius: 8px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.lq-prompt {
+  line-height: 1.6;
+  font-weight: 600;
+}
+.lq-tip {
+  font-size: 0.75rem;
+  opacity: 0.65;
+}
+.lq-figure {
+  display: flex;
+  justify-content: center;
+}
+.lq-figure svg {
+  max-width: 100%;
+  height: auto;
+}
+.lq-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.lq-chip {
+  font: inherit;
+  font-size: 0.92rem;
+  padding: 0.55rem 0.9rem;
+  min-height: 44px;
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.08s, background 0.15s;
+}
+.lq-chip:active {
+  transform: scale(0.97);
+}
+.lq-chip:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.lq-order .lq-chip[data-order]:not([data-order=""])::before {
+  content: attr(data-order);
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: var(--color-success);
+  color: var(--color-keycap);
+}
+.lq-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.lq-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+}
+.lq-row-text {
+  line-height: 1.45;
+  font-size: 0.9rem;
+}
+.lq-slot {
+  font: inherit;
+  min-width: 8.5rem;
+  min-height: 40px;
+  border-radius: 6px;
+  cursor: pointer;
+  border-style: dashed;
+}
+.lq-slot.filled {
+  border-style: solid;
+  font-weight: 700;
+}
+.lq-slot.next {
+  animation: lq-blink 1s infinite;
+}
+.lq-strand {
+  display: flex;
+  justify-content: center;
+  gap: 0.35rem;
+  font-family: Consolas, "Courier New", monospace;
+}
+.lq-pair {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+.lq-base {
+  width: 2.3rem;
+  height: 2.3rem;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+.lq-base-in.next {
+  animation: lq-blink 1s infinite;
+}
+.lq-bond {
+  opacity: 0.5;
+  line-height: 1;
+}
+.lq-keys .lq-key {
+  min-width: 3rem;
+  font-family: Consolas, "Courier New", monospace;
+  font-weight: 800;
+}
+@keyframes lq-blink {
+  50% {
+    opacity: 0.45;
+  }
+}
+.lq-wrong {
+  animation: lq-shake 0.45s;
+}
+@keyframes lq-shake {
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+/* ── STAGE 1: 밝은 연구소 패널 ── */
+.lq-lab .lq-box {
+  background: var(--color-lab-floor-a);
+  color: var(--color-keycap);
+  border: 2px solid var(--color-lab-trim);
+}
+.lq-lab .lq-head {
+  color: var(--color-lab-accent);
+}
+.lq-lab .lq-chip,
+.lq-lab .lq-slot,
+.lq-lab .lq-base {
+  background: var(--color-white);
+  color: var(--color-keycap);
+  border: 2px solid var(--color-lab-trim);
+}
+.lq-lab .lq-chip.picked,
+.lq-lab .lq-slot.filled,
+.lq-lab .lq-base-in.filled {
+  background: var(--color-lab-accent);
+  color: var(--color-white);
+  border-color: var(--color-lab-accent);
+}
+.lq-lab .lq-base-given {
+  background: var(--color-lab-glass);
+}
+.lq-lab .lq-right {
+  border-color: var(--color-lab-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-lab-accent) 35%, transparent);
+}
+.lq-lab .lq-wrong {
+  border-color: var(--color-danger);
+}
+
+/* ── STAGE 3: 격리 구역 단말 ── */
+.lq-dark .lq-box {
+  background: color-mix(in srgb, var(--color-bg-void) 88%, var(--color-toxic));
+  color: var(--color-text);
+  border: 1px solid color-mix(in srgb, var(--color-toxic) 45%, transparent);
+  box-shadow: inset 0 0 24px color-mix(in srgb, var(--color-toxic) 8%, transparent);
+}
+.lq-dark .lq-head {
+  color: var(--color-toxic);
+}
+.lq-dark .lq-chip,
+.lq-dark .lq-slot,
+.lq-dark .lq-base {
+  background: var(--color-bg-void);
+  color: var(--color-toxic);
+  border: 1px solid color-mix(in srgb, var(--color-toxic) 55%, transparent);
+  font-family: inherit;
+}
+.lq-dark .lq-chip.picked,
+.lq-dark .lq-slot.filled,
+.lq-dark .lq-base-in.filled {
+  background: color-mix(in srgb, var(--color-toxic) 22%, var(--color-bg-void));
+  border-color: var(--color-toxic);
+}
+.lq-dark .lq-right {
+  border-color: var(--color-toxic);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--color-toxic) 40%, transparent);
+}
+.lq-dark .lq-wrong {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--color-danger) 50%, transparent);
+}

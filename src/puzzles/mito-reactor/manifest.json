@@ -1,0 +1,38 @@
+{
+  "id": "mito-reactor",
+  "title": "비상 발전기 — 마이토콘드리아 세포호흡 회로",
+  "act": 3,
+  "concept": "세포호흡 단계와 ATP 생성",
+  "curriculum": {
+    "과목": "세포와 물질대사",
+    "단원": "Ⅲ. 세포호흡과 광합성",
+    "성취기준": "(코드 검증 예정) 세포호흡의 과정(해당 과정, 피루브산의 산화, TCA 회로, 산화적 인산화)을 물질 변화와 에너지 전환 관점에서 설명한다"
+  },
+  "narrative": {
+    "intro": "story.md#mito-reactor-intro",
+    "clear": "story.md#mito-reactor-clear",
+    "notes": []
+  },
+  "trigger": {
+    "map": "qz-2",
+    "objectId": "mito-reactor"
+  },
+  "reward": {
+    "event": "code:mito-solved"
+  },
+  "testIds": {
+    "root": "puzzle-mito-reactor",
+    "solveCheck": "lq-step-1"
+  },
+  "principle": [
+    "세포호흡: 세포질의 해당 과정 → 마이토콘드리아의 피루브산의 산화(아세틸조효소 A 생성) → TCA 회로 → 산화적 인산화(전자전달계).",
+    "전자전달계의 최종 전자수용체는 산소(O₂) — 산소가 없으면 전자 전달이 막혀 산화적 인산화로 만드는 ATP가 끊긴다.",
+    "피루브산 1분자는 산화된 뒤 TCA 회로를 거치면 이산화 탄소 3분자로 분해된다 (피루브산의 산화 1 + TCA 회로 2).",
+    "보안코드 1번 자리 [3]."
+  ],
+  "hints": [
+    "포도당은 세포질에서 먼저 쪼개진다.",
+    "산소는 맨 마지막 단계에서 쓰인다.",
+    "아세틸조효소 A가 만들어질 때 하나, TCA 회로 한 바퀴에서 둘."
+  ]
+}

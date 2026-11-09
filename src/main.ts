@@ -3,22 +3,40 @@ import tokens from "../design-tokens.json";
 import { showDialogue } from "./engine/narrative/dialogue";
 import { bus } from "./engine/events/EventBus";
 import { Game } from "./engine/core/Game";
-import { maps, FIRST_ROOM } from "./maps";
+import { maps, FIRST_ROOM, STAGE3_ROOM } from "./maps";
 import { loadProgress, hasProgress, clearProgress, saveProgress } from "./engine/core/save";
 import { Sfx } from "./engine/audio/sfx";
 import { Ambience } from "./engine/audio/ambience";
-import { initSonicRoomFx } from "./puzzles/silent-node/roomfx";
 import type { GameMap } from "./maps/types";
 import {
   TITLE_SUB,
   TITLE_MAIN,
   START_LABEL,
   CHAR_SELECT_LABEL,
+  CHAR_SELECT_LABEL_STAGE3,
   CREDIT,
   CREDIT_URL,
   CONTACT_EMAIL,
   CONTACT_CATEGORIES,
+  ALLOW_CONTINUE,
+  GIFT_TIERS,
+  HIDDEN_MAX_FAILS,
+  FULLSCREEN,
 } from "./config";
+import {
+  showStage1Escape,
+  showGiftKiosk,
+  playGlitch,
+  showStage3Escape,
+  showGameOut,
+  playZoneCard,
+  playEmergencyWake,
+  type GiftTier,
+} from "./stage/screens";
+import { setupQuarantine } from "./stage/quarantine";
+import { QZ_ZONES } from "./maps/quarantine-room";
+import { puzzles } from "./registry";
+import { sessionStats } from "./engine/core/stats";
 
 /** design-tokens.json → :root CSS 변수 주입 (색·치수 단일 소스) */
 function applyTokens(): void {
@@ -151,8 +169,8 @@ function showTitle(app: HTMLElement): void {
   const buttons = document.createElement("div");
   buttons.className = "title-buttons";
 
-  // 저장된 진행이 있으면 '이어하기'를 먼저 노출
-  if (hasProgress()) {
+  // 저장된 진행이 있으면 '이어하기'를 먼저 노출 (축제 부스판은 ALLOW_CONTINUE=false로 끈다)
+  if (ALLOW_CONTINUE && hasProgress()) {
     const cont = document.createElement("button");
     cont.className = "title-start";
     cont.dataset.testid = "continue-button";
@@ -169,7 +187,7 @@ function showTitle(app: HTMLElement): void {
   const start = document.createElement("button");
   start.className = "title-start";
   start.dataset.testid = "start-button";
-  start.textContent = hasProgress() ? "처음부터" : START_LABEL;
+  start.textContent = ALLOW_CONTINUE && hasProgress() ? "처음부터" : START_LABEL;
   start.addEventListener("click", () => {
     Sfx.confirm();
     Ambience.start();
@@ -205,7 +223,7 @@ function showTitle(app: HTMLElement): void {
 }
 
 /** 새 시작 시 캐릭터 선택 — 픽셀 스프라이트 2종 중 탭 */
-function showCharSelect(app: HTMLElement): Promise<"m" | "f"> {
+function showCharSelect(app: HTMLElement, label = CHAR_SELECT_LABEL): Promise<"m" | "f"> {
   return new Promise((resolve) => {
     const screen = document.createElement("div");
     screen.className = "char-select";
@@ -213,7 +231,7 @@ function showCharSelect(app: HTMLElement): Promise<"m" | "f"> {
 
     const title = document.createElement("div");
     title.className = "title-sub";
-    title.textContent = CHAR_SELECT_LABEL;
+    title.textContent = label;
 
     const row = document.createElement("div");
     row.className = "char-select-row";
@@ -257,11 +275,14 @@ function showCharSelect(app: HTMLElement): Promise<"m" | "f"> {
  *  다만 첫 방의 인트로는 프롤로그 대사 **뒤에** 와야 순서가 맞으므로
  *  startPrologue에서 직접 재생한다 (map:enter는 start() 시점 = 튜토리얼보다 앞이다). */
 function registerRoomFx(app: HTMLElement): void {
-  // 청음실 룸 오디오(경보 간섭 음장 + 소음 미터) — 모달 없는 퍼즐 silent-node의 무대장치
-  initSonicRoomFx(app);
+  // STAGE 1 출구 → 선물 교환 코드 발급 화면 (엔진은 문에서 'stage1:escaped'만 쏜다)
+  bus.on("stage1:escaped", () => {
+    void showDialogue("#lab-escape", app).then(() => showStage1Escape(app));
+  });
 }
 
 async function startPrologue(app: HTMLElement): Promise<void> {
+  document.body.dataset.stage = "1";
   await showDialogue("#prologue-wake", app);
   registerRoomFx(app);
 
@@ -270,11 +291,10 @@ async function startPrologue(app: HTMLElement): Promise<void> {
   bus.emit("prologue:done");
 
   await showDialogue("#prologue-tutorial", app);
-  await showDialogue("#prologue-rule", app); // 시험 규칙: 네 자리 열쇠는 네 장치에 나뉘어 있다
-  await showDialogue("#sn-room-intro", app);
+  await showDialogue("#prologue-rule", app); // 보안코드 세 자리는 장치 세 대에 나뉘어 있다
 }
 
-/** 이어하기: 프롤로그 생략, 마지막 방에서 재개 */
+/** 이어하기: 프롤로그 생략, 마지막 방에서 재개 (ALLOW_CONTINUE일 때만) */
 async function startContinue(app: HTMLElement): Promise<void> {
   const saved = loadProgress();
   const startMap: GameMap = (saved.lastMap && maps[saved.lastMap]) || FIRST_ROOM;
@@ -285,7 +305,126 @@ async function startContinue(app: HTMLElement): Promise<void> {
   bus.emit("prologue:done");
 }
 
+// ───────────── STAGE 2 → STAGE 3 (생물실 컴퓨터: ?stage=2) ─────────────
+
+const GIFT_KEY = "gs-biolab-escape:gift";
+const CHAR_KEY = "gs-biolab-escape:char";
+
+/** STAGE 2: 선물 교환 키오스크 → 글리치 → STAGE 3 */
+async function startStage2(app: HTMLElement): Promise<void> {
+  document.body.dataset.stage = "2";
+  const { tier, character, screen } = await showGiftKiosk(app);
+  try {
+    sessionStorage.setItem(GIFT_KEY, tier.code);
+    sessionStorage.setItem(CHAR_KEY, character);
+  } catch {
+    /* 사생활 모드 등 — 재도전 시 선물 표시·캐릭터 기억만 빠진다 */
+  }
+  Ambience.start(); // 키오스크 Enter = 사용자 제스처
+  await playGlitch(app, screen); // 밝은 키오스크가 그 자리에서 깨진다
+  await startStage3(app, tier, character);
+}
+
+/** STAGE 3: 격리 구역 3-1 → 3-2 → 3-3 → (히든). ?stage=3[&zone=qz-2] 재도전은 여기로 곧장 들어온다 */
+async function startStage3(
+  app: HTMLElement,
+  tier: GiftTier | null,
+  chosen?: "m" | "f",
+  startZone = "qz-1",
+): Promise<void> {
+  document.body.dataset.stage = "3";
+  clearProgress();
+  // 키오스크에서 이미 골랐으면 묻지 않는다 — 글리치와 격리 구역 사이에 화면이 끼면 공포가 끊긴다
+  const character = chosen ?? (await showCharSelect(app, CHAR_SELECT_LABEL_STAGE3));
+  Ambience.start(); // ?stage=3 재도전 경로에서는 캐릭터 클릭이 사용자 제스처
+  saveProgress({ events: [], notes: [], character });
+  try {
+    sessionStorage.setItem(CHAR_KEY, character); // GAME OUT 뒤 재도전 때 다시 묻지 않는다
+  } catch {
+    /* 무시 */
+  }
+
+  const zone0 = QZ_ZONES.find((z) => z.id === startZone) ?? QZ_ZONES[0];
+  let currentZone: string = zone0.id;
+  const qz = setupQuarantine(app, {
+    solveEvents: puzzles.filter((p) => p.manifest.act === 3).map((p) => p.manifest.reward.event),
+    atpBoostEvent: "code:mito-solved",
+    onGameOut: (reason) => void showGameOut(app, reason, currentZone),
+  });
+  bus.on("stage3:escaped", () => {
+    qz.stop();
+    void showDialogue("#qz-escape", app).then(() => showStage3Escape(app, tier));
+  });
+  // 3-3 철문 — 오답이 적었으면 히든 스테이지, 아니면 탈출
+  bus.on("stage3:zone3-cleared", () => {
+    if (sessionStats.fails <= HIDDEN_MAX_FAILS) game.enterMap("qz-hidden");
+    else bus.emit("stage3:escaped");
+  });
+  // 구역 진입 — 첫 구역 말고는 철문을 지나 들어온 것: 타이틀 카드 → 구역 대사
+  const zoneIntro: Record<string, string> = {
+    "qz-2": "#qz-zone2-intro",
+    "qz-3": "#qz-zone3-intro",
+    "qz-hidden": "#qz-hidden-intro",
+  };
+  for (const z of QZ_ZONES) {
+    bus.on(`map:enter:${z.id}`, () => {
+      const first = z.id === zone0.id && currentZone === zone0.id && !qzStarted;
+      currentZone = z.id;
+      qz.enterZone(z.id, first);
+      if (first) return;
+      void playZoneCard(app, z.label, z.name).then(() => showDialogue(zoneIntro[z.id] ?? "#qz-door-locked", app));
+    });
+  }
+
+  let qzStarted = false;
+  const game = new Game(app, maps[zone0.id] ?? STAGE3_ROOM);
+  await game.start();
+  qzStarted = true;
+  bus.emit("prologue:done");
+  await playEmergencyWake(app); // 칠흑 → 비상등 깜빡임 → 쾅
+  await playZoneCard(app, zone0.label, zone0.name);
+  if (zone0.id === "qz-1") {
+    await showDialogue("#qz-intro", app);
+    await showDialogue("#qz-rule", app);
+  } else {
+    await showDialogue(zoneIntro[zone0.id] ?? "#qz-rule", app);
+  }
+  qz.begin();
+}
+
+/** 전체화면 — 브라우저는 사용자 입력 없이 허용하지 않으므로 클릭·키 입력 때마다 다시 시도한다 */
+function keepFullscreen(): void {
+  if (!FULLSCREEN) return;
+  const enter = () => {
+    if (document.fullscreenElement || !document.documentElement.requestFullscreen) return;
+    document.documentElement.requestFullscreen({ navigationUI: "hide" }).catch(() => {
+      /* 미리보기 창 등 전체화면을 막는 환경 — 그냥 창 크기로 진행 */
+    });
+  };
+  window.addEventListener("pointerdown", enter, true);
+  window.addEventListener("keydown", enter, true);
+}
 const app = document.getElementById("app");
 if (!app) throw new Error("#app 루트가 없습니다");
 applyTokens();
-showTitle(app);
+keepFullscreen();
+
+const stage = new URLSearchParams(location.search).get("stage");
+if (stage === "2") {
+  void startStage2(app);
+} else if (stage === "3") {
+  let tier: GiftTier | null = null;
+  let character: "m" | "f" | undefined;
+  try {
+    const code = sessionStorage.getItem(GIFT_KEY);
+    tier = GIFT_TIERS.find((t) => t.code === code) ?? null;
+    const c = sessionStorage.getItem(CHAR_KEY);
+    if (c === "m" || c === "f") character = c;
+  } catch {
+    /* 무시 */
+  }
+  const zone = new URLSearchParams(location.search).get("zone") ?? "qz-1";
+  void startStage3(app, tier, character, zone);
+} else {
+  showTitle(app);
+}

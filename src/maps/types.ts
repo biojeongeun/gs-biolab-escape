@@ -23,7 +23,23 @@ export interface MapObject {
     spawn?: [number, number];
     requiresEvent?: string | string[];
     ending?: boolean;
+    /** 열린 문을 지나면 이 이벤트를 발화하고 조작을 잠근다 — 스테이지 전환처럼
+     *  엔진 밖(main.ts)이 다음 화면을 정하는 문. ending·toMap보다 우선한다. */
+    emit?: string;
   };
+  /**
+   * 보안코드 잠금 — 잠긴 문에서 상호작용하면 화면 상단 입력줄(CodeBar)이 활성화된다.
+   * 정답이면 `event`를 발화한다(보통 door.requiresEvent와 같은 값 → 곧바로 열림).
+   * 맵에 `codeSlots`가 있어야 입력줄이 생긴다.
+   */
+  codeLock?: { code: string; event: string };
+  /**
+   * 보안코드 단서 — 이 장치의 퍼즐을 풀면 장치 위에 `slot번 = digit` 배지가 뜨고
+   * 입력줄의 그 자리에 '찾음' 점이 켜진다. slot은 1부터.
+   */
+  clue?: { slot: number; digit: string };
+  /** 퍼즐을 이미 푼 장치에 다시 다가갔을 때의 대사(없으면 퍼즐을 다시 연다) */
+  solvedAnchor?: string;
   /** 연구노트: 상호작용 시 노트 열람 + 수집 (story.md의 note-XX) */
   noteId?: string;
   /** 수색 지점: 조사 시 발견 오버레이 표시 (+아이템 획득). 방탈출 단서 체인의 재료 */
@@ -119,6 +135,10 @@ export interface GameMap {
    *  이벤트 발화 전까지 칠흑으로 덮이고 통행·상호작용·수색 마커가 전부 막힌다.
    *  배경은 통짜 그림 한 장이므로 구역을 **덮어서** 가린다(그림을 자르지 않는다). */
   sealed?: SealedArea[];
+  /** 화면 최상단 보안코드 입력줄의 자릿수 — 있으면 CodeBar HUD가 뜬다 */
+  codeSlots?: number;
+  /** 방 바깥(빈 공간) 색 — design-tokens.json의 color 키. 기본 bg-void (밝은 방은 밝게) */
+  voidColor?: string;
 }
 
 export interface SealedArea {

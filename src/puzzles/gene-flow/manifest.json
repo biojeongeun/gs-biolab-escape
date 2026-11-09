@@ -1,0 +1,38 @@
+{
+  "id": "gene-flow",
+  "title": "DNA 분석기 — 유전정보 해독",
+  "act": 1,
+  "concept": "유전정보의 흐름 (전사·단백질 합성·코돈)",
+  "curriculum": {
+    "과목": "통합과학1",
+    "단원": "시스템과 상호작용 — 세포 내 정보의 흐름",
+    "성취기준": "(코드 검증 예정) 생명 시스템 유지에 필요한 세포 내 정보의 흐름을 유전자로부터 단백질이 만들어지는 과정(전사·라이보솜에서의 단백질 합성)을 중심으로 설명한다"
+  },
+  "narrative": {
+    "intro": "story.md#gene-flow-intro",
+    "clear": "story.md#gene-flow-clear",
+    "notes": []
+  },
+  "trigger": {
+    "map": "lab-room",
+    "objectId": "gene-flow"
+  },
+  "reward": {
+    "event": "code:gene-solved"
+  },
+  "testIds": {
+    "root": "puzzle-gene-flow",
+    "solveCheck": "lq-step-1"
+  },
+  "principle": [
+    "유전정보의 흐름: DNA의 유전정보 → 전사 → RNA → 라이보솜에서 코돈에 따라 아미노산이 결합해 단백질 합성.",
+    "전사할 때 짝은 아데닌–유라실, 타이민–아데닌, 구아닌–사이토신, 사이토신–구아닌. RNA에는 타이민 대신 유라실이 있다.",
+    "RNA에서 연속된 3개의 염기가 아미노산 하나를 지정하는 유전부호가 코돈이다 — AUGCCG는 코돈 2개, 아미노산 2개.",
+    "보안코드 2번 자리 [2]."
+  ],
+  "hints": [
+    "단백질은 맨 마지막에 만들어진다.",
+    "DNA의 아데닌(A) 자리에는 RNA의 유라실(U)이 온다.",
+    "염기 6개를 3개씩 묶어 보라."
+  ]
+}

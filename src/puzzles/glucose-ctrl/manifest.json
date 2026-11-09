@@ -1,0 +1,37 @@
+{
+  "id": "glucose-ctrl",
+  "title": "혈당 조절 장치 — 이자 호르몬",
+  "act": 3,
+  "concept": "인슐린과 글루카곤의 길항작용, 음성피드백",
+  "curriculum": {
+    "과목": "생명과학",
+    "단원": "II. 항상성과 몸의 조절 — 항상성 유지",
+    "성취기준": "(코드 검증 예정) 호르몬과 자율신경에 의한 항상성 유지 원리(음성피드백·길항작용)를 혈당량 조절 사례로 설명할 수 있다"
+  },
+  "narrative": {
+    "intro": "story.md#glucose-ctrl-intro",
+    "clear": "story.md#glucose-ctrl-clear",
+    "notes": []
+  },
+  "trigger": {
+    "map": "qz-1",
+    "objectId": "glucose-ctrl"
+  },
+  "reward": {
+    "event": "code:glucose-ctrl-solved"
+  },
+  "testIds": {
+    "root": "puzzle-glucose-ctrl",
+    "solveCheck": "lq-step-1"
+  },
+  "principle": [
+    "이자의 β 세포 → 인슐린(혈당량↓), α 세포 → 글루카곤(혈당량↑).",
+    "서로 반대로 작용해 항상성을 유지하는 것이 길항작용, 결과가 원인을 억제하는 것이 음성피드백.",
+    "보안코드 2번 자리 [2] — 혈당을 반대로 조절하는 호르몬 두 가지."
+  ],
+  "hints": [
+    "β는 낮추고 α는 올린다.",
+    "'길항'은 서로 맞서 버틴다는 뜻이다.",
+    "결과가 다시 원인을 누른다 — 피드백의 방향은?"
+  ]
+}

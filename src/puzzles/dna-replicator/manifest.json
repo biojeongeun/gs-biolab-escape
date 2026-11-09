@@ -1,0 +1,37 @@
+{
+  "id": "dna-replicator",
+  "title": "유전정보 해독기 — 복제와 번역",
+  "act": 3,
+  "concept": "반보존적 복제, 단백질합성(번역) 단계, 코돈",
+  "curriculum": {
+    "과목": "생물의 유전",
+    "단원": "I. 유전자와 유전물질 / II. 유전자의 발현",
+    "성취기준": "(코드 검증 예정) DNA의 반보존적 복제 과정과 전사·번역을 거쳐 단백질이 합성되는 과정을 설명할 수 있다"
+  },
+  "narrative": {
+    "intro": "story.md#dna-replicator-intro",
+    "clear": "story.md#dna-replicator-clear",
+    "notes": []
+  },
+  "trigger": {
+    "map": "qz-3",
+    "objectId": "dna-replicator"
+  },
+  "reward": {
+    "event": "code:dna-replicator-solved"
+  },
+  "testIds": {
+    "root": "puzzle-dna-replicator",
+    "solveCheck": "lq-step-1"
+  },
+  "principle": [
+    "DNA는 반보존적 복제를 한다 — 새 DNA마다 원래 가닥 하나 + 새 가닥 하나.",
+    "단백질합성(번역)은 개시 → 신장 → 종결.",
+    "코돈 = 염기 3개 → 아미노산 1개. 염기 12개 = 코돈 4개 — 보안코드 1번 자리 [4]."
+  ],
+  "hints": [
+    "'반'만 보존된다.",
+    "시작, 늘리기, 끝.",
+    "12를 3으로 나눠라."
+  ]
+}

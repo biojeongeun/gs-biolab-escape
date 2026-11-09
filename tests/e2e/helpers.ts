@@ -1,4 +1,4 @@
-﻿import { expect, type Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 /**
  * 상호작용 대상 앞에 설 때의 정지 오차(타일).
@@ -49,98 +49,6 @@ export async function enterRoom(page: Page, character: "m" | "f" = "m", path = "
 
   // 튜토리얼 + 규칙 + 첫 방 인트로 대사 순차 진행.
   await dismissDialogues(page);
-}
-
-/**
- * 청음실(sonic-room)로 진입. 지금은 첫 방이므로 enterRoom이 곧 이 방이다.
- * `?grid`로 여는 이유는 __qe 디버그 훅(seals·searched·warp)을 spec에서 쓰기 때문이다.
- * 방은 암전 상태로 시작한다(dark) — P1을 풀어야 점등.
- *
- * 방을 앞에 더 붙이면 여기서 `goDoor`로 걸어 들어오거나 `__qe.warp("sonic-room")`을 쓴다.
- */
-export async function enterSonicRoom(page: Page, character: "m" | "f" = "m"): Promise<void> {
-  await enterRoom(page, character, "/?grid");
-  await expect
-    .poll(() => page.evaluate(() => (window as never as { __qe: { map: string } }).__qe.map))
-    .toBe("sonic-room");
-}
-
-/** P1 진자 발전기를 해결한다 — 리듬 입력은 CI에서 플레이키하므로 e2e 훅으로 진폭을 채운다.
- * (박자 수렴 자체는 spec의 순수 함수 검산이 보증한다) */
-export async function solvePendulum(page: Page, isMobile: boolean): Promise<void> {
-  const { SOLVE_AMP } = await import("../../src/puzzles/pendulum-dynamo/autoplay");
-  await openStation(page, isMobile, 6, 4.5, "puzzle-pendulum");
-  await page.evaluate((v) => {
-    (window as never as { __qePendSet: (n: number) => void }).__qePendSet(v);
-  }, SOLVE_AMP);
-  await expect(page.getByTestId("dynamo-started")).toBeVisible({ timeout: 8000 });
-  await dismissDialogues(page); // #sn-pend-clear (+ 조명 복구 연출)
-  await expect(page.getByTestId("puzzle-pendulum")).toBeHidden();
-}
-
-/** P2 벽 노크를 해결한다 — 빈 패널을 두드려 벽감을 열고 릴 테이프를 얻는다.
- * (조명은 무관하지만 관례상 solvePendulum 이후 호출) */
-export async function solveKnock(page: Page, isMobile: boolean): Promise<void> {
-  const { HOLLOW_ROW, HOLLOW_COL } = await import("../../src/puzzles/wall-sounding/autoplay");
-  await openStation(page, isMobile, 9, 1.7, "puzzle-knock");
-  await page.getByTestId(`knock-panel-${HOLLOW_ROW}-${HOLLOW_COL}`).click();
-  await page.getByTestId("knock-open").click();
-  await expect(page.getByTestId("knock-found")).toBeVisible();
-  await dismissDialogues(page); // #sn-knock-clear
-  await expect(page.getByTestId("puzzle-knock")).toBeHidden();
-  await expect(page.getByTestId("item-reel-tape")).toBeVisible();
-}
-
-/**
- * 3번 방 녹음 부스(booth) 봉인을 연다 — 본실 퍼즐 P1(전원)·P2(노크)·P3(무음점)를
- * 실제로 풀어 opensWhen(P2 AND P3) 조건을 채운다. 우회 훅 없음(openCoreZone 규약).
- */
-export async function openBoothZone(page: Page, isMobile: boolean): Promise<void> {
-  await solvePendulum(page, isMobile);
-  await dismissDialogues(page); // #sn-alarm-start
-  await solveKnock(page, isMobile);
-  await solveNode(page, isMobile);
-  await dismissDialogues(page); // #sn-seal-open
-  // 페이드가 끝나야 통행·상호작용이 열린다
-  await expect
-    .poll(
-      () =>
-        page.evaluate(
-          () => (window as never as { __qe: { seals: Record<string, number> } }).__qe.seals["booth"]
-        ),
-      { timeout: 12_000 }
-    )
-    .toBe(0);
-}
-
-/** P3 무음 지점을 해결한다 — 해치까지 걸어가 반위상 주입 패널에서 주입 신호를
- * 반파장(Δφ=π)만큼 끌어 정렬한 뒤 차단 스위치를 내린다.
- * (P1 해결로 경보가 활성인 상태를 가정 — solvePendulum 이후 호출) */
-export async function solveNode(page: Page, isMobile: boolean): Promise<void> {
-  const { HATCH, WAVE_CYCLES } = await import("../../src/puzzles/silent-node/autoplay");
-  await openStation(page, isMobile, HATCH[0], HATCH[1], "puzzle-silent");
-
-  // 정렬 전엔 스위치가 잠겨 있다 — 원버튼 회귀 방지 단언
-  const switchBtn = page.getByTestId("node-switch");
-  await expect(switchBtn).toBeDisabled();
-
-  // 주입 신호를 반파장만큼 가로 드래그 — 렌더 폭 기준으로 환산 (CSS 폭 ≠ 논리 폭)
-  const canvas = page.getByTestId("node-canvas");
-  const box = (await canvas.boundingBox())!;
-  const dragPx = box.width / WAVE_CYCLES / 2;
-  const cy = box.y + box.height / 2;
-  // 왼쪽 절반에서 시작해 드래그가 캔버스 밖으로 나가도 pointer capture로 이어진다
-  const sx = box.x + box.width * 0.3;
-  await page.mouse.move(sx, cy);
-  await page.mouse.down();
-  await page.mouse.move(sx + dragPx, cy, { steps: 8 });
-  await page.mouse.up();
-
-  await expect(switchBtn).toBeEnabled();
-  await switchBtn.click();
-  await expect(page.getByTestId("node-cut")).toBeVisible();
-  await dismissDialogues(page); // #sn-node-clear
-  await expect(page.getByTestId("puzzle-silent")).toBeHidden();
 }
 
 /** 타이틀 → '이어하기'로 마지막 방에 재개 (프롤로그 생략) */
