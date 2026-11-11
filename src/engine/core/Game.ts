@@ -56,7 +56,12 @@ const OCCLUDER_ALPHA = 0.68;
 // 카메라 줌 — 월드 전체(배경·타일·벽·캐릭터·사물)에 균일 적용해 시야를 넓힌다.
 // 에셋 배율을 개별로 줄이면 서로의 비율이 깨지므로, 렌더 좌표계에서 한 번에 축소한다.
 // UI(HUD·대사)는 DOM이라 영향 없고, 스파클·암막 반경은 화면 기준을 유지한다.
-const CAMERA_ZOOM = 0.5;
+// 화면 크기에 맞춰 resize()가 다시 정한다 — 방 전체가 화면에 꽉 차게(contain) 맞추고,
+// 그러면 방이 너무 작아지는 좁은 화면(세로 휴대폰)만 MIN_ZOOM으로 버티며 플레이어를 따라간다.
+let CAMERA_ZOOM = 0.5;
+const MIN_ZOOM = 0.42;
+/** 방을 화면에 맞출 때 남기는 여백 비율 (HUD·보안코드 줄이 방 가장자리를 덜 가리게) */
+const FIT_MARGIN = 0.96;
 
 const PLAYER_SPEED = 3.2; // 타일/초
 
@@ -398,6 +403,7 @@ export class Game {
     }
     this.syncSeals(next);
     this.buildCodebar();
+    this.resize(); // 방마다 크기가 다를 수 있다 — 줌·카메라를 다시 맞춘다
     this.persist();
     bus.emit(`map:enter:${next.id}`);
   }
@@ -548,10 +554,43 @@ export class Game {
     this.ui.remove();
   }
 
+  /**
+   * 방의 화면 경계 (월드 화면 좌표, 카메라 원점 기준).
+   * 프리렌더 배경이 있으면 그 그림의 테두리를, 없으면 타일 마름모 + 벽 높이를 쓴다.
+   */
+  private roomBounds(): { x: number; y: number; w: number; h: number } {
+    const bg = this.map.background;
+    const img = bg ? this.sprites[bg.sprite] : undefined;
+    if (bg && img) {
+      const bs = bg.scale ?? 1;
+      const bsy = bg.scaleY ?? bs;
+      // 그림 둘레의 빈 여백(그릴 때 넣은 pad)은 조금 깎는다
+      const padX = 60 * bs * 0.5;
+      return { x: bg.offsetX + padX, y: bg.offsetY, w: img.width * bs - padX * 2, h: img.height * bsy - padX };
+    }
+    const c = this.map.cols;
+    const r = this.map.rows;
+    const left = worldToScreen(-0.5, r - 0.5)[0];
+    const right = worldToScreen(c - 0.5, -0.5)[0];
+    const top = worldToScreen(-0.5, -0.5)[1] - 420;
+    const bottom = worldToScreen(c - 0.5, r - 0.5)[1];
+    return { x: left, y: top, w: right - left, h: bottom - top };
+  }
+
+  /** 지금 화면에서 방 전체가 보이는가 (보이면 카메라를 방 가운데에 고정) */
+  private roomFits = false;
+  private lastPlX = NaN;
+  private lastPlY = NaN;
+
   private resize(): void {
     const dpr = window.devicePixelRatio || 1;
     this.canvas.width = this.host.clientWidth * dpr;
     this.canvas.height = this.host.clientHeight * dpr;
+    // 방 전체가 화면에 들어오는 가장 큰 줌 — 모니터가 커질수록 방도 같이 커진다
+    const b = this.roomBounds();
+    const fit = Math.min(this.host.clientWidth / b.w, this.host.clientHeight / b.h) * FIT_MARGIN;
+    this.roomFits = fit >= MIN_ZOOM;
+    CAMERA_ZOOM = Math.max(MIN_ZOOM, fit);
     // 줌을 좌표계에 녹여 넣는다 — 이후 렌더 코드는 "줌 좌표"(뷰포트 = clientW/ZOOM)로 그린다
     this.ctx.setTransform(dpr * CAMERA_ZOOM, 0, 0, dpr * CAMERA_ZOOM, 0, 0);
     // 픽셀아트 크리스프 렌더 — 캔버스 리사이즈마다 리셋되므로 매번 재설정
@@ -1063,10 +1102,14 @@ export class Game {
     ];
   }
 
-  /** 카메라: 플레이어를 화면 중앙에 */
+  /** 카메라: 방이 통째로 들어오면 방 가운데에 고정, 아니면(좁은 화면) 플레이어를 화면 중앙에 */
   private cameraOffset(): [number, number] {
-    const [px, py] = worldToScreen(this.player.x, this.player.y);
     const [w, h] = this.viewSize();
+    if (this.roomFits) {
+      const b = this.roomBounds();
+      return [w / 2 - (b.x + b.w / 2), h / 2 - (b.y + b.h / 2)];
+    }
+    const [px, py] = worldToScreen(this.player.x, this.player.y);
     return [w / 2 - px, h / 2 - py];
   }
 
@@ -1078,6 +1121,22 @@ export class Game {
     ctx.fillRect(0, 0, w, h);
 
     const [ox, oy] = this.cameraOffset();
+
+    // 플레이어의 화면 위치·줌을 CSS 변수로 내보낸다 — 손전등 비네트 같은 DOM 연출이
+    // 카메라가 방에 고정돼 플레이어가 화면 가운데가 아닐 때도 캐릭터를 따라가게
+    {
+      const [px, py] = worldToScreen(this.player.x, this.player.y);
+      const sx = Math.round((ox + px) * CAMERA_ZOOM);
+      const sy = Math.round((oy + py - 110) * CAMERA_ZOOM);
+      if (sx !== this.lastPlX || sy !== this.lastPlY) {
+        this.lastPlX = sx;
+        this.lastPlY = sy;
+        const st = document.documentElement.style;
+        st.setProperty("--pl-x", `${sx}px`);
+        st.setProperty("--pl-y", `${sy}px`);
+        st.setProperty("--zoom-k", (CAMERA_ZOOM / 0.5).toFixed(3));
+      }
+    }
 
     // 프리렌더 방 배경이 있으면 타일·벽·데코 렌더를 통째로 대체 (레퍼런스 수준 일러스트)
     const bg = this.map.background;

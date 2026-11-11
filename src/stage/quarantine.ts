@@ -3,7 +3,7 @@
  *
  * 엔진은 이 파일을 모른다. 이벤트 버스로만 엮인다:
  *   듣는 것  puzzle:fail · code:wrong (오답 → 좀비 접근)
- *            opts.solveEvents (장치 해결 → 바리케이드·환기, 발전기는 ATP 충전)
+ *            opts.atpBoostEvent (발전기 해결 → ATP 상한 증가 — 다른 회복은 없다)
  *            stage3:escaped (탈출)
  *   보내는 것 player:speed (ATP 고갈 시 이동 둔화) · player:collapse (GAME OUT 직전 쓰러짐)
  *
@@ -21,9 +21,7 @@ import {
   ZOMBIE_START_M,
   ZOMBIE_SPEED_MPS,
   ZOMBIE_WRONG_M,
-  ZOMBIE_SOLVE_BONUS_M,
   O2_DRAIN_PER_S,
-  O2_SOLVE_BONUS,
   ATP_START,
   ATP_MAX,
   ATP_MOVE_COST_PER_S,
@@ -311,16 +309,13 @@ export function setupQuarantine(app: HTMLElement, h: Options): QuarantineHandle 
     paint();
   };
   offs.push(bus.on("puzzle:fail", wrong), bus.on("code:wrong", wrong));
+  // 장치를 풀어도 거리·산소·ATP는 회복되지 않는다 — 3-1부터 끝까지 수치가 그대로 이어진다.
+  // 발전기(마이토콘드리아)만 ATP '상한'을 늘려 준다 (지금 ATP 값은 그대로).
   for (const ev of h.solveEvents) {
+    if (ev !== h.atpBoostEvent) continue;
     offs.push(
       bus.on(ev, () => {
-        zombie = Math.min(ZOMBIE_START_M, zombie + ZOMBIE_SOLVE_BONUS_M);
-        o2 = Math.min(100, o2 + O2_SOLVE_BONUS);
-        if (ev === h.atpBoostEvent) {
-          // 발전기 = 마이토콘드리아: ATP 상한이 늘고 가득 찬다
-          atpMax = ATP_MAX * 1.5;
-          atp = atpMax;
-        }
+        atpMax = ATP_MAX * 1.5;
         paint();
       }),
     );

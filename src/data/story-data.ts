@@ -56,7 +56,7 @@ export const storyData: Record<string, StoryEntry> = {
   "immune-scan-clear": {"speaker":"희원 — 비상 모드","text":"형질세포가 항체를, 기억세포가 2차 면역반응을. B형 적혈구의 응집원은 B 하나. 보안코드 3번 자리는 1 이에요. 이제 철문으로!"},
   "immune-scan-done": {"speaker":"희원 — 비상 모드","text":"면역 단말이 알려 준 숫자 — 3번 자리 1."},
   "mito-reactor-intro": {"speaker":"희원 — 비상 모드","text":"비상 발전기가 멈췄어요. 이건 마이토콘드리아를 본뜬 장치예요 — 세포호흡 과정을 순서대로 다시 이어야 해요."},
-  "mito-reactor-clear": {"speaker":"희원 — 비상 모드","text":"전력 복구! 환기 재개, ATP 충전 완료. 피루브산 1분자에서 이산화 탄소 3분자 — 보안코드 1번 자리는 3 이에요."},
+  "mito-reactor-clear": {"speaker":"희원 — 비상 모드","text":"전력 복구! ATP를 더 많이 저장할 수 있게 됐어요. 피루브산 1분자에서 이산화 탄소 3분자 — 보안코드 1번 자리는 3 이에요."},
   "mito-reactor-done": {"speaker":"희원 — 비상 모드","text":"발전기가 알려 준 숫자 — 1번 자리 3."},
   "enzyme-lock-intro": {"speaker":"희원 — 비상 모드","text":"효소 반응 제어기예요. 누군가 반응기에 억제제를 섞어 놨어요. 정체를 밝혀야 해요."},
   "enzyme-lock-clear": {"speaker":"희원 — 비상 모드","text":"효소는 활성화에너지를 낮추고, 반응 뒤에도 그대로 남아요. 사라진 효소는 0. 보안코드 2번 자리는 0 이에요."},

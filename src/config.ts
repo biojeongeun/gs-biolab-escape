@@ -68,15 +68,17 @@ export const GIFT_KIOSK_HELP = "STAGE 1 탈출 화면에서 받은 선물 교환
 
 // ───────────── STAGE 3 생존 수치 ─────────────
 
-/** 좀비와의 거리(m) — 시작값, 초당 접근 속도, 오답 1회당 접근, 장치 해결 시 후퇴(바리케이드) */
-export const ZOMBIE_START_M = 120;
-export const ZOMBIE_SPEED_MPS = 0.14; // 약 14분
+/**
+ * 좀비와의 거리(m) — 시작값, 초당 접근 속도(구역 배율 ZONE_ZOMBIE_SPEEDUP을 곱한다), 오답 1회당 접근.
+ * 수치는 3-1부터 히든까지 한 번도 되돌아가지 않는다 — 장치를 풀어도 회복 없음.
+ * 구역마다 약 4분이면: 3-1~3-3에 약 75m, 히든에 약 36m를 쓴다 → 오답 몇 번의 여유.
+ */
+export const ZOMBIE_START_M = 150;
+export const ZOMBIE_SPEED_MPS = 0.08;
 export const ZOMBIE_WRONG_M = 8;
-export const ZOMBIE_SOLVE_BONUS_M = 12;
 
-/** 잔여 산소(%) — 초당 감소, 장치 해결 시 회복(환기) */
-export const O2_DRAIN_PER_S = 0.11; // 약 15분
-export const O2_SOLVE_BONUS = 10;
+/** 잔여 산소(%) — 초당 감소. 회복 없음 (약 19분이면 바닥) */
+export const O2_DRAIN_PER_S = 0.085;
 
 /** ATP — 시작값·최대, 이동 중 초당 소모, 정지 중 초당 회복, 고갈 시 이동 속도 배율 */
 export const ATP_START = 30;
