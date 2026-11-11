@@ -58,7 +58,7 @@ function zone(z: ZoneSpec): GameMap {
     cols: 12,
     rows: 12,
     spawn: SPAWN,
-    background: { sprite: z.background, scale: 2, offsetX: -860, offsetY: -534 },
+    background: { sprite: z.background, scale: 2, offsetX: -1692, offsetY: -534, frame: { x: -800, y: -474, w: 1600, h: 1230 } },
     codeSlots: 3,
     blocks: [
       { x0: -1, y0: -1, x1: 0.5, y1: 13 },

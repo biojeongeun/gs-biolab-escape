@@ -108,6 +108,11 @@ export interface GameMap {
     offsetX: number;
     offsetY: number;
     /**
+     * 카메라가 화면에 맞출 플레이 구역 (월드 화면 좌표). 그림이 방 밖 복도까지 넓게 그려졌을 때
+     * 쓴다 — 없으면 그림 전체에 맞춘다. scripts/draw-lab.mjs가 값을 출력한다.
+     */
+    frame?: { x: number; y: number; w: number; h: number };
+    /**
      * 앞가림 구조물 — 그림 속 기둥·나무처럼 **캐릭터가 뒤로 지나가면 가려야 하는** 것.
      * 배경은 통짜 한 장이라 캐릭터 아래에만 깔리므로, 여기 적은 조각만 다시 위에 덮는다.
      *

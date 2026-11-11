@@ -31,6 +31,8 @@ const TH = tokens.tile.h / 2; // 32
 const RES = 0.5; // 래스터 해상도 (게임 표시 배율 = 1/RES)
 
 export const N = 12; // 방 한 변 타일 수 (맵 cols/rows와 동기)
+/** 방 밖으로 이어 그리는 복도 칸 수 — 21:9 울트라와이드까지 양옆이 비지 않을 만큼 */
+const WIDE = 13;
 const WH = 380; // 벽 높이 (월드 px) — 캐릭터 250px 대비 1.5배
 
 const iso = (x, y, z = 0) => [(x - y) * TW, (x + y) * TH - z];
@@ -226,30 +228,69 @@ function room(theme, zone = null) {
     : { wallL: C["lab-wall-shade"], wallR: C["lab-wall"], fa: C["lab-floor-a"], fb: C["lab-floor-b"], trim: C["lab-trim"], grout: shade(C["lab-floor-b"], 0.93) };
   const out = [];
   const defs = [];
+  // 와이드 화면용 — 바닥과 뒷벽이 방 밖 복도로 L칸까지 이어진다. 플레이 구역(N×N)은 그대로이고
+  // 바깥은 어둡게 눌러 '복도'로 보이게 한다. 카메라는 frame(N×N 방)에 맞춘다.
+  const L = N + WIDE;
 
-  // 바닥 타일
-  for (let i = 0; i < N; i++)
-    for (let j = 0; j < N; j++) {
+  // 천장·건물 너머 — 그림 전체를 먼저 칠해 둔다 (와이드 화면 위쪽 귀퉁이가 비지 않게)
+  {
+    const pad = 60;
+    const x0 = -L * TW - 0.5 * TW - pad, x1 = L * TW + 0.5 * TW + pad;
+    const y0 = -TH - WH - 0.35 * 2 * TH - pad - 40, y1 = (2 * L - 1) * TH + pad;
+    const ceil = dark ? shade(C["bg-void"], 0.9) : shade(P.wallL, 0.78);
+    out.push(`<rect x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}" fill="${ceil}"/>`);
+    // 천장 철골 보 — 벽과 나란한 줄 몇 개
+    for (let k = 0; k < 6; k++) {
+      const z = WH + 60 + k * 70;
+      out.push(`<polyline points="${pts([iso(-0.5 - k * 0.6, L - 0.5, z), iso(-0.5 - k * 0.6, -0.5 - k * 0.6, z), iso(L - 0.5, -0.5 - k * 0.6, z)])}" stroke="${shade(dark ? C["steel-dark"] : P.trim, dark ? 0.8 : 0.7)}" stroke-width="10" fill="none" opacity="0.5"/>`);
+    }
+  }
+
+  // 바닥 타일 (방 밖 복도까지)
+  for (let i = 0; i < L; i++)
+    for (let j = 0; j < L; j++) {
       const f = (i + j) % 2 ? P.fa : P.fb;
       out.push(poly([iso(i - 0.5, j - 0.5), iso(i + 0.5, j - 0.5), iso(i + 0.5, j + 0.5), iso(i - 0.5, j + 0.5)], f, `stroke="${P.grout}" stroke-width="1.2"`));
     }
 
-  // 벽 두 면
-  out.push(poly([iso(-0.5, -0.5), iso(-0.5, N - 0.5), iso(-0.5, N - 0.5, WH), iso(-0.5, -0.5, WH)], P.wallL));
-  out.push(poly([iso(-0.5, -0.5), iso(N - 0.5, -0.5), iso(N - 0.5, -0.5, WH), iso(-0.5, -0.5, WH)], P.wallR));
+  // 벽 두 면 (복도까지 이어짐)
+  out.push(poly([iso(-0.5, -0.5), iso(-0.5, L - 0.5), iso(-0.5, L - 0.5, WH), iso(-0.5, -0.5, WH)], P.wallL));
+  out.push(poly([iso(-0.5, -0.5), iso(L - 0.5, -0.5), iso(L - 0.5, -0.5, WH), iso(-0.5, -0.5, WH)], P.wallR));
   // 벽 패널 이음매
-  for (let k = 1; k < N; k += 1.5) {
+  for (let k = 1; k < L; k += 1.5) {
     out.push(`<polyline points="${pts([iso(-0.5, k - 0.5, 18), iso(-0.5, k - 0.5, WH - 14)])}" stroke="${shade(P.wallL, 0.88)}" stroke-width="2"/>`);
     out.push(`<polyline points="${pts([iso(k - 0.5, -0.5, 18), iso(k - 0.5, -0.5, WH - 14)])}" stroke="${shade(P.wallR, 0.88)}" stroke-width="2"/>`);
   }
   // 걸레받이 + 상단 몰딩
-  out.push(poly([iso(-0.5, -0.5, 0), iso(-0.5, N - 0.5, 0), iso(-0.5, N - 0.5, 18), iso(-0.5, -0.5, 18)], shade(P.trim, 0.8)));
-  out.push(poly([iso(-0.5, -0.5, 0), iso(N - 0.5, -0.5, 0), iso(N - 0.5, -0.5, 18), iso(-0.5, -0.5, 18)], P.trim));
-  out.push(poly([iso(-0.5, -0.5, WH - 14), iso(-0.5, N - 0.5, WH - 14), iso(-0.5, N - 0.5, WH), iso(-0.5, -0.5, WH)], shade(P.trim, 0.85)));
-  out.push(poly([iso(-0.5, -0.5, WH - 14), iso(N - 0.5, -0.5, WH - 14), iso(N - 0.5, -0.5, WH), iso(-0.5, -0.5, WH)], P.trim));
+  out.push(poly([iso(-0.5, -0.5, 0), iso(-0.5, L - 0.5, 0), iso(-0.5, L - 0.5, 18), iso(-0.5, -0.5, 18)], shade(P.trim, 0.8)));
+  out.push(poly([iso(-0.5, -0.5, 0), iso(L - 0.5, -0.5, 0), iso(L - 0.5, -0.5, 18), iso(-0.5, -0.5, 18)], P.trim));
+  out.push(poly([iso(-0.5, -0.5, WH - 14), iso(-0.5, L - 0.5, WH - 14), iso(-0.5, L - 0.5, WH), iso(-0.5, -0.5, WH)], shade(P.trim, 0.85)));
+  out.push(poly([iso(-0.5, -0.5, WH - 14), iso(L - 0.5, -0.5, WH - 14), iso(L - 0.5, -0.5, WH), iso(-0.5, -0.5, WH)], P.trim));
   // 벽 윗면 두께 (잘린 단면)
   const T = 0.35;
-  out.push(poly([iso(-0.5, -0.5, WH), iso(N - 0.5, -0.5, WH), iso(N - 0.5, -0.5 - T, WH), iso(-0.5 - T, -0.5 - T, WH), iso(-0.5 - T, N - 0.5, WH), iso(-0.5, N - 0.5, WH)], dark ? C["bg-void"] : shade(P.trim, 0.6)));
+  out.push(poly([iso(-0.5, -0.5, WH), iso(L - 0.5, -0.5, WH), iso(L - 0.5, -0.5 - T, WH), iso(-0.5 - T, -0.5 - T, WH), iso(-0.5 - T, L - 0.5, WH), iso(-0.5, L - 0.5, WH)], dark ? C["bg-void"] : shade(P.trim, 0.6)));
+
+  // ── 복도 (방 밖) — 닫힌 문·벽등을 두고, 바닥·벽을 어둡게 눌러 플레이 구역과 구분한다 ──
+  {
+    const doorC = dark ? shade(C["steel"], 0.55) : shade(C["steel"], 1.05);
+    const lampC = dark ? (Z ? Z.light() : C["danger"]) : C["white"];
+    for (const at of [N + 2.5, N + 8.5]) {
+      // 오른벽(복도 오른쪽)·왼벽(복도 왼쪽)에 같은 간격으로 닫힌 연구실 문
+      out.push(poly([iso(at, -0.5, 0), iso(at + 1.6, -0.5, 0), iso(at + 1.6, -0.5, 250), iso(at, -0.5, 250)], doorC, `stroke="${C["steel-dark"]}" stroke-width="4"`));
+      out.push(poly([iso(-0.5, at, 0), iso(-0.5, at + 1.6, 0), iso(-0.5, at + 1.6, 250), iso(-0.5, at, 250)], shade(doorC, 0.85), `stroke="${C["steel-dark"]}" stroke-width="4"`));
+      for (const [lx, ly] of [[at + 0.8, -0.5], [-0.5, at + 0.8]]) {
+        const [cx, cy] = iso(lx, ly, 300);
+        out.push(`<rect x="${cx - 16}" y="${cy - 6}" width="32" height="10" rx="3" fill="${lampC}" opacity="${dark ? 0.9 : 0.8}"/>`);
+      }
+    }
+    // 방 밖 바닥·벽 어둡게
+    const dim = dark ? 0.5 : 0.22;
+    const dimC = C["bg-void"];
+    out.push(poly([iso(-0.5, N - 0.5), iso(L - 0.5, N - 0.5), iso(L - 0.5, L - 0.5), iso(-0.5, L - 0.5)], dimC, `opacity="${dim}"`));
+    out.push(poly([iso(N - 0.5, -0.5), iso(L - 0.5, -0.5), iso(L - 0.5, N - 0.5), iso(N - 0.5, N - 0.5)], dimC, `opacity="${dim}"`));
+    out.push(poly([iso(-0.5, N - 0.5), iso(-0.5, L - 0.5), iso(-0.5, L - 0.5, WH), iso(-0.5, N - 0.5, WH)], dimC, `opacity="${dim}"`));
+    out.push(poly([iso(N - 0.5, -0.5), iso(L - 0.5, -0.5), iso(L - 0.5, -0.5, WH), iso(N - 0.5, -0.5, WH)], dimC, `opacity="${dim}"`));
+  }
 
   // ── 왼벽: 발광하는 생물학 모식도 스크린 (y 1.6~7.4, z 120~330) ──
   {
@@ -469,14 +510,29 @@ function room(theme, zone = null) {
     }
   }
 
-  // 그림 범위 계산
+  // ── 플레이 구역 경계 난간 (방 앞 두 모서리) — 유리판 + 손잡이 + 기둥 ──
+  {
+    const H = 64;
+    const glass = dark ? shade(C["steel-dark"], 1.3) : C["lab-glass"];
+    for (const [a, b] of [[[-0.5, N - 0.5], [N - 0.5, N - 0.5]], [[N - 0.5, -0.5], [N - 0.5, N - 0.5]]]) {
+      out.push(poly([iso(a[0], a[1], 0), iso(b[0], b[1], 0), iso(b[0], b[1], H), iso(a[0], a[1], H)], glass, `opacity="${dark ? 0.35 : 0.3}"`));
+      out.push(`<polyline points="${pts([iso(a[0], a[1], H), iso(b[0], b[1], H)])}" stroke="${dark ? C["steel"] : C["lab-trim"]}" stroke-width="5"/>`);
+      for (let t = 0; t <= 1.0001; t += 1 / 8) {
+        const x = a[0] + (b[0] - a[0]) * t, y = a[1] + (b[1] - a[1]) * t;
+        out.push(`<polyline points="${pts([iso(x, y, 0), iso(x, y, H)])}" stroke="${dark ? C["steel"] : C["lab-trim"]}" stroke-width="4"/>`);
+      }
+    }
+  }
+
+  // 그림 범위 계산 — 그림은 복도(L칸)까지, frame은 플레이 구역(N칸 방)
   const pad = 60;
-  const minX = -N * TW - 0.5 * TW - pad;
-  const maxX = N * TW + 0.5 * TW + pad;
+  const minX = -L * TW - 0.5 * TW - pad;
+  const maxX = L * TW + 0.5 * TW + pad;
   const minY = -TH - WH - 0.35 * 2 * TH - pad - 40;
-  const maxY = (2 * N - 1) * TH + pad;
+  const maxY = (2 * L - 1) * TH + pad;
+  const frame = { x: -N * TW - 0.5 * TW, y: minY + pad, w: (2 * N + 1) * TW, h: (2 * N - 1) * TH + 20 - (minY + pad) };
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${maxX - minX}" height="${maxY - minY}" viewBox="${minX} ${minY} ${maxX - minX} ${maxY - minY}"><defs>${defs.join("")}</defs>${out.join("\n")}</svg>`;
-  return { svg, minX, minY, w: maxX - minX, h: maxY - minY };
+  return { svg, minX, minY, w: maxX - minX, h: maxY - minY, frame };
 }
 
 // ───────────────────────────── 장치 스프라이트 ─────────────────────────────
@@ -603,7 +659,8 @@ mkdirSync(join(root, "assets-src", "gen"), { recursive: true });
 for (const [name, theme, zone] of [["lab", "lab", null], ["quarantine", "quarantine", null], ["qz-1", "quarantine", "qz-1"], ["qz-2", "quarantine", "qz-2"], ["qz-3", "quarantine", "qz-3"]]) {
   const r = room(theme, zone);
   writeFileSync(join(root, "assets-src", "rooms", `room-${name}.png`), render(r.svg, RES));
-  console.log(`room-${name}: background { scale: ${1 / RES}, offsetX: ${Math.round(r.minX)}, offsetY: ${Math.round(r.minY)} }`);
+  const f = r.frame;
+  console.log(`room-${name}: background { scale: ${1 / RES}, offsetX: ${Math.round(r.minX)}, offsetY: ${Math.round(r.minY)}, frame: { x: ${Math.round(f.x)}, y: ${Math.round(f.y)}, w: ${Math.round(f.w)}, h: ${Math.round(f.h)} } }`);
 }
 
 const scales = JSON.parse(readFileSync(join(root, "assets-src", "asset-scale.json"), "utf8"));

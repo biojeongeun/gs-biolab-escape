@@ -561,6 +561,7 @@ export class Game {
   private roomBounds(): { x: number; y: number; w: number; h: number } {
     const bg = this.map.background;
     const img = bg ? this.sprites[bg.sprite] : undefined;
+    if (bg?.frame) return bg.frame; // 그림이 복도까지 넓을 때 — 플레이 구역만 화면에 맞춘다
     if (bg && img) {
       const bs = bg.scale ?? 1;
       const bsy = bg.scaleY ?? bs;

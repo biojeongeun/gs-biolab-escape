@@ -20,7 +20,7 @@ export const labRoom: GameMap = {
   rows: 12,
   spawn: [5.5, 9.5],
   // node scripts/draw-lab.mjs 출력값 (코드로 그린 그림이라 실측 없이 정확하다)
-  background: { sprite: "room-lab", scale: 2, offsetX: -860, offsetY: -534 },
+  background: { sprite: "room-lab", scale: 2, offsetX: -1692, offsetY: -534, frame: { x: -800, y: -474, w: 1600, h: 1230 } },
   codeSlots: 3,
   voidColor: "lab-wall-shade",
   blocks: [
