@@ -237,8 +237,10 @@ export class Game {
           for (const ev of [o.door.requiresEvent].flat()) watch.add(ev);
       for (const o of m.objects) if (o.codeLock) watch.add(o.codeLock.event);
     }
+    // destroy() 때 함께 떼어 낸다 — 한 페이지에서 STAGE 1 → STAGE 3으로 Game을 갈아 끼우므로,
+    // 남아 있으면 사라진 STAGE 1 게임이 STAGE 3 이벤트에 반응해 저장을 덮어쓴다
     watch.forEach((ev) =>
-      bus.on(ev, () => {
+      this.detachers.push(bus.on(ev, () => {
         this.firedEvents.add(ev);
         // 퍼즐 보상 아이템 — reward.itemId가 있으면 인벤토리에 지급 (3번 방 릴 테이프)
         const rewarded = puzzles.find((p) => p.manifest.reward.event === ev);
@@ -262,7 +264,7 @@ export class Game {
           Sfx.lightsOn();
         this.syncCodebar();
         this.persist();
-      }),
+      })),
     );
 
     // e2e·디버깅용 상태 노출

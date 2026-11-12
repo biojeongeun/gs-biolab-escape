@@ -44,7 +44,10 @@ export function tierForFails(fails: number): GiftTier {
   return GIFT_TIERS.find((t) => fails <= t.maxFails) ?? GIFT_TIERS[GIFT_TIERS.length - 1];
 }
 
-/** STAGE 1 탈출 화면 — 선물 교환 코드 발급. Enter를 누르면 다음 손님(타이틀) */
+/**
+ * STAGE 1 탈출 화면 — 선물 교환 코드 발급. [Enter]·클릭이면 이 화면을 지우고 끝난다 —
+ * 같은 프로그램 안에서 곧바로 STAGE 2 키오스크로 이어진다(main.ts가 연결).
+ */
 export async function showStage1Escape(app: HTMLElement): Promise<void> {
   const tier = tierForFails(sessionStats.fails);
   const screen = el("div", "stage-screen stage1-escape");
@@ -52,19 +55,23 @@ export async function showStage1Escape(app: HTMLElement): Promise<void> {
   screen.append(
     el("div", "stage-kicker", "STAGE 1 CLEAR"),
     el("h1", "stage-title", "연구소 견학 미션 성공!"),
-    el("p", "stage-text", "생물실로 이동해 아래 선물 교환 코드를 입력하세요"),
+    el("p", "stage-text", "아래 선물 교환 코드를 기억해 두세요 — 다음 화면의 선물 교환 키오스크에 입력합니다"),
   );
   const code = el("div", "gift-code", tier.code);
   code.dataset.testid = "gift-code";
   screen.append(
     code,
     el("p", "stage-meta", `오답 ${sessionStats.fails}회 · 힌트 ${sessionStats.hintsUsed}회 · 플레이 ${playTime()}`),
-    el("p", "stage-foot", "[Enter] 다음 손님"),
+    el("p", "stage-foot", "[Enter] 선물 교환하러 가기"),
   );
   app.appendChild(screen);
   Sfx.success();
-  await waitKey(["Enter"]);
-  location.href = location.pathname; // 타이틀로 (진행 초기화는 시작할 때)
+  // 터치 화면도 넘어갈 수 있게 — 키 또는 화면 클릭 중 먼저 오는 것
+  await Promise.race([
+    waitKey(["Enter"]),
+    new Promise<void>((r) => screen.addEventListener("click", () => r(), { once: true })),
+  ]);
+  screen.remove();
 }
 
 export interface KioskResult {
@@ -79,7 +86,8 @@ export interface KioskResult {
  * 캐릭터 선택을 여기서 끝내 두는 이유: 글리치 직후에 선택 화면이 끼면 공포가 끊긴다.
  * 등록된 코드가 들어오면 화면을 지우지 않은 채 resolve — 다음 글리치가 이 화면을 깨뜨린다.
  */
-export function showGiftKiosk(app: HTMLElement): Promise<KioskResult> {
+export function showGiftKiosk(app: HTMLElement, preset?: "m" | "f"): Promise<KioskResult> {
+  // preset: STAGE 1에서 이어 왔으면 이미 고른 캐릭터 — 사진 고르기 단계를 건너뛴다
   return new Promise((resolve) => {
     const BASE = import.meta.env.BASE_URL;
     const screen = el("div", "stage-screen kiosk");
@@ -88,7 +96,7 @@ export function showGiftKiosk(app: HTMLElement): Promise<KioskResult> {
     card.append(el("div", "stage-kicker", "BIO ROOM · GIFT EXCHANGE"), el("h1", "stage-title", GIFT_KIOSK_TITLE));
 
     // 견학증 사진 고르기 (= STAGE 3 캐릭터)
-    let character: "m" | "f" = "m";
+    let character: "m" | "f" = preset ?? "m";
     const pick = el("div", "kiosk-pick");
     const picks = (["m", "f"] as const).map((g) => {
       const b = el("button", "kiosk-avatar");
@@ -107,7 +115,7 @@ export function showGiftKiosk(app: HTMLElement): Promise<KioskResult> {
       pick.appendChild(b);
       return b;
     });
-    picks[0].classList.add("on");
+    picks[character === "f" ? 1 : 0].classList.add("on");
 
     const input = el("input", "kiosk-input");
     input.dataset.testid = "gift-input";
@@ -116,14 +124,16 @@ export function showGiftKiosk(app: HTMLElement): Promise<KioskResult> {
     input.spellcheck = false;
     const msg = el("p", "kiosk-msg");
     msg.dataset.testid = "gift-msg";
-    card.append(
-      el("p", "stage-text", "① 견학증 사진을 고르세요"),
-      pick,
-      el("p", "stage-text", `② ${GIFT_KIOSK_HELP}`),
-      input,
-      msg,
-      el("p", "stage-foot", "[Enter] 확인"),
-    );
+    if (preset) card.append(el("p", "stage-text", GIFT_KIOSK_HELP), input, msg, el("p", "stage-foot", "[Enter] 확인"));
+    else
+      card.append(
+        el("p", "stage-text", "① 견학증 사진을 고르세요"),
+        pick,
+        el("p", "stage-text", `② ${GIFT_KIOSK_HELP}`),
+        input,
+        msg,
+        el("p", "stage-foot", "[Enter] 확인"),
+      );
     screen.appendChild(card);
     app.appendChild(screen);
     input.focus();

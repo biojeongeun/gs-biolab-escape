@@ -274,19 +274,28 @@ function showCharSelect(app: HTMLElement, label = CHAR_SELECT_LABEL): Promise<"m
  *
  *  다만 첫 방의 인트로는 프롤로그 대사 **뒤에** 와야 순서가 맞으므로
  *  startPrologue에서 직접 재생한다 (map:enter는 start() 시점 = 튜토리얼보다 앞이다). */
-function registerRoomFx(app: HTMLElement): void {
-  // STAGE 1 출구 → 선물 교환 코드 발급 화면 (엔진은 문에서 'stage1:escaped'만 쏜다)
-  bus.on("stage1:escaped", () => {
-    void showDialogue("#lab-escape", app).then(() => showStage1Escape(app));
+function registerRoomFx(app: HTMLElement, getGame: () => Game | null): void {
+  // STAGE 1 출구 → 선물 교환 코드 발급 → (같은 프로그램 안에서) STAGE 2 키오스크 → 글리치 → STAGE 3
+  // 엔진은 문에서 'stage1:escaped'만 쏜다. 페이지를 새로 열지 않아 전체화면이 풀리지 않는다.
+  const off = bus.on("stage1:escaped", () => {
+    off();
+    void (async () => {
+      await showDialogue("#lab-escape", app);
+      await showStage1Escape(app);
+      getGame()?.destroy(); // STAGE 1 방을 완전히 내린다 (입력·이벤트 구독까지)
+      const c = loadProgress().character;
+      await startStage2(app, c === "m" || c === "f" ? c : undefined);
+    })();
   });
 }
 
 async function startPrologue(app: HTMLElement): Promise<void> {
   document.body.dataset.stage = "1";
   await showDialogue("#prologue-wake", app);
-  registerRoomFx(app);
+  let game: Game | null = null;
+  registerRoomFx(app, () => game);
 
-  const game = new Game(app, FIRST_ROOM);
+  game = new Game(app, FIRST_ROOM);
   await game.start();
   bus.emit("prologue:done");
 
@@ -298,9 +307,10 @@ async function startPrologue(app: HTMLElement): Promise<void> {
 async function startContinue(app: HTMLElement): Promise<void> {
   const saved = loadProgress();
   const startMap: GameMap = (saved.lastMap && maps[saved.lastMap]) || FIRST_ROOM;
-  registerRoomFx(app);
+  let game: Game | null = null;
+  registerRoomFx(app, () => game);
 
-  const game = new Game(app, startMap);
+  game = new Game(app, startMap);
   await game.start();
   bus.emit("prologue:done");
 }
@@ -310,10 +320,14 @@ async function startContinue(app: HTMLElement): Promise<void> {
 const GIFT_KEY = "gs-biolab-escape:gift";
 const CHAR_KEY = "gs-biolab-escape:char";
 
-/** STAGE 2: 선물 교환 키오스크 → 글리치 → STAGE 3 */
-async function startStage2(app: HTMLElement): Promise<void> {
+/**
+ * STAGE 2: 선물 교환 키오스크 → 글리치 → STAGE 3.
+ * STAGE 1에서 이어 오면 preset(이미 고른 캐릭터)이 있어 사진 고르기를 건너뛴다.
+ * ?stage=2로 바로 열면(생물실 컴퓨터를 따로 둘 때) 예전처럼 사진부터 고른다.
+ */
+async function startStage2(app: HTMLElement, preset?: "m" | "f"): Promise<void> {
   document.body.dataset.stage = "2";
-  const { tier, character, screen } = await showGiftKiosk(app);
+  const { tier, character, screen } = await showGiftKiosk(app, preset);
   try {
     sessionStorage.setItem(GIFT_KEY, tier.code);
     sessionStorage.setItem(CHAR_KEY, character);
@@ -345,6 +359,8 @@ async function startStage3(
   }
 
   const zone0 = QZ_ZONES.find((z) => z.id === startZone) ?? QZ_ZONES[0];
+  // 히든 조건은 STAGE 3 오답만 센다 — STAGE 1에서 한 프로그램으로 이어 오면 그 오답이 섞여 있다
+  const failsBefore = sessionStats.fails;
   let currentZone: string = zone0.id;
   const qz = setupQuarantine(app, {
     solveEvents: puzzles.filter((p) => p.manifest.act === 3).map((p) => p.manifest.reward.event),
@@ -357,7 +373,7 @@ async function startStage3(
   });
   // 3-3 철문 — 오답이 적었으면 히든 스테이지, 아니면 탈출
   bus.on("stage3:zone3-cleared", () => {
-    if (sessionStats.fails <= HIDDEN_MAX_FAILS) game.enterMap("qz-hidden");
+    if (sessionStats.fails - failsBefore <= HIDDEN_MAX_FAILS) game.enterMap("qz-hidden");
     else bus.emit("stage3:escaped");
   });
   // 구역 진입 — 첫 구역 말고는 철문을 지나 들어온 것: 타이틀 카드 → 구역 대사
