@@ -22,8 +22,11 @@ export const CREDIT = "made with escape-kit by 청학고 도쌤";
 /** 제작자 표기를 눌렀을 때 열리는 주소. 킷을 받아 쓰는 사람은 자기 주소로 바꾼다. */
 export const CREDIT_URL = "https://dossamlink.vercel.app";
 
-/** 문의하기 — 메일 폴백 주소와 분류. 두 번째 항목이 교과 질문 자리다. */
-export const CONTACT_EMAIL = "dossamlab@gmail.com";
+/**
+ * 문의하기 — 메일 폴백 주소와 분류. 두 번째 항목이 교과 질문 자리다.
+ * GitHub Pages에는 폼 수신 서버가 없어 항상 이 주소로 메일 앱이 열린다 — 운영자(교사) 본인 메일.
+ */
+export const CONTACT_EMAIL = "je961107@gmail.com";
 export const CONTACT_CATEGORIES = [
   "새로운 방 아이디어 제안",
   "버그 제보",
