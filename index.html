@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <!-- ⚠ 이 블록은 src/config.ts가 못 닿는 유일한 자리다 (빌드 전 정적 HTML).
+         새 교과로 갈아탈 때 제목·설명·URL을 여기서도 직접 고칠 것.
+         og:image는 두지 않는다 — 1200×630 대표 이미지가 없으면 깨진 썸네일이 뜬다. -->
+    <title>GS BIOLAB — 생명과학 방탈출</title>
+    <meta
+      name="description"
+      content="평화로운 연구소 견학에서 좀비 아포칼립스 격리 구역 탈출까지 — 고등학교 생명과학 방탈출 (축제 부스판)."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="GS BIOLAB Escape" />
+    <meta property="og:title" content="GS BIOLAB — 생명과학 방탈출" />
+    <meta
+      property="og:description"
+      content="평화로운 연구소 견학에서 좀비 아포칼립스 격리 구역 탈출까지 — 고등학교 생명과학 방탈출 (축제 부스판)."
+    />
+    <meta name="twitter:card" content="summary" />
+    <script type="module" crossorigin src="./assets/index-DWdpTFPS.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index---M7if4P.css">
+  </head>
+  <body>
+    <!-- Netlify Forms 감지용 정적 폼 (배포 시 봇이 스캔) — 실제 UI는 main.ts의 문의하기 오버레이 -->
+    <form name="contact" data-netlify="true" netlify-honeypot="bot-field" hidden>
+      <input type="text" name="bot-field" />
+      <input type="text" name="category" />
+      <textarea name="message"></textarea>
+    </form>
+    <div id="app"></div>
+  </body>
+</html>

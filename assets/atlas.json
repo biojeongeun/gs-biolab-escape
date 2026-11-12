@@ -1,0 +1,305 @@
+{
+  "note": {
+    "file": "assets/note.png",
+    "w": 48,
+    "h": 56,
+    "scale": 2
+  },
+  "tile-a": {
+    "file": "assets/tile-a.png",
+    "w": 128,
+    "h": 64
+  },
+  "tile-b": {
+    "file": "assets/tile-b.png",
+    "w": 128,
+    "h": 64
+  },
+  "wall-ne": {
+    "file": "assets/wall-ne.png",
+    "w": 64,
+    "h": 128
+  },
+  "wall-nw": {
+    "file": "assets/wall-nw.png",
+    "w": 64,
+    "h": 128
+  },
+  "char-f-e-a": {
+    "file": "assets/char-f-e-a.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-f-e-b": {
+    "file": "assets/char-f-e-b.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-f-e-idle": {
+    "file": "assets/char-f-e-idle.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-f-ne-a": {
+    "file": "assets/char-f-ne-a.png",
+    "w": 19,
+    "h": 50,
+    "scale": 5
+  },
+  "char-f-ne-b": {
+    "file": "assets/char-f-ne-b.png",
+    "w": 19,
+    "h": 50,
+    "scale": 5
+  },
+  "char-f-ne-idle": {
+    "file": "assets/char-f-ne-idle.png",
+    "w": 19,
+    "h": 50,
+    "scale": 5
+  },
+  "char-f-nw-a": {
+    "file": "assets/char-f-nw-a.png",
+    "w": 19,
+    "h": 50,
+    "scale": 5
+  },
+  "char-f-nw-b": {
+    "file": "assets/char-f-nw-b.png",
+    "w": 19,
+    "h": 50,
+    "scale": 5
+  },
+  "char-f-nw-idle": {
+    "file": "assets/char-f-nw-idle.png",
+    "w": 19,
+    "h": 50,
+    "scale": 5
+  },
+  "char-f-se-a": {
+    "file": "assets/char-f-se-a.png",
+    "w": 19,
+    "h": 50,
+    "scale": 5
+  },
+  "char-f-se-b": {
+    "file": "assets/char-f-se-b.png",
+    "w": 19,
+    "h": 50,
+    "scale": 5
+  },
+  "char-f-se-idle": {
+    "file": "assets/char-f-se-idle.png",
+    "w": 19,
+    "h": 50,
+    "scale": 5
+  },
+  "char-f-sw-a": {
+    "file": "assets/char-f-sw-a.png",
+    "w": 19,
+    "h": 50,
+    "scale": 5
+  },
+  "char-f-sw-b": {
+    "file": "assets/char-f-sw-b.png",
+    "w": 19,
+    "h": 50,
+    "scale": 5
+  },
+  "char-f-sw-idle": {
+    "file": "assets/char-f-sw-idle.png",
+    "w": 19,
+    "h": 50,
+    "scale": 5
+  },
+  "char-f-w-a": {
+    "file": "assets/char-f-w-a.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-f-w-b": {
+    "file": "assets/char-f-w-b.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-f-w-idle": {
+    "file": "assets/char-f-w-idle.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-m-e-a": {
+    "file": "assets/char-m-e-a.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-m-e-b": {
+    "file": "assets/char-m-e-b.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-m-e-idle": {
+    "file": "assets/char-m-e-idle.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-m-ne-a": {
+    "file": "assets/char-m-ne-a.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-m-ne-b": {
+    "file": "assets/char-m-ne-b.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-m-ne-idle": {
+    "file": "assets/char-m-ne-idle.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-m-nw-a": {
+    "file": "assets/char-m-nw-a.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-m-nw-b": {
+    "file": "assets/char-m-nw-b.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-m-nw-idle": {
+    "file": "assets/char-m-nw-idle.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-m-se-a": {
+    "file": "assets/char-m-se-a.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-m-se-b": {
+    "file": "assets/char-m-se-b.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-m-se-idle": {
+    "file": "assets/char-m-se-idle.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-m-sw-a": {
+    "file": "assets/char-m-sw-a.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-m-sw-b": {
+    "file": "assets/char-m-sw-b.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-m-sw-idle": {
+    "file": "assets/char-m-sw-idle.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-m-w-a": {
+    "file": "assets/char-m-w-a.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-m-w-b": {
+    "file": "assets/char-m-w-b.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "char-m-w-idle": {
+    "file": "assets/char-m-w-idle.png",
+    "w": 18,
+    "h": 50,
+    "scale": 5
+  },
+  "room-lab": {
+    "file": "assets/room-lab.png",
+    "w": 1692,
+    "h": 1081
+  },
+  "room-quarantine": {
+    "file": "assets/room-quarantine.png",
+    "w": 1692,
+    "h": 1081
+  },
+  "room-qz-1": {
+    "file": "assets/room-qz-1.png",
+    "w": 1692,
+    "h": 1081
+  },
+  "room-qz-2": {
+    "file": "assets/room-qz-2.png",
+    "w": 1692,
+    "h": 1081
+  },
+  "room-qz-3": {
+    "file": "assets/room-qz-3.png",
+    "w": 1692,
+    "h": 1081
+  },
+  "dev-ecotank": {
+    "file": "assets/dev-ecotank.png",
+    "w": 76,
+    "h": 118,
+    "scale": 2
+  },
+  "dev-immune": {
+    "file": "assets/dev-immune.png",
+    "w": 70,
+    "h": 101,
+    "scale": 2
+  },
+  "dev-microscope": {
+    "file": "assets/dev-microscope.png",
+    "w": 89,
+    "h": 121,
+    "scale": 2
+  },
+  "dev-mito": {
+    "file": "assets/dev-mito.png",
+    "w": 83,
+    "h": 144,
+    "scale": 2
+  },
+  "dev-pedigree": {
+    "file": "assets/dev-pedigree.png",
+    "w": 80,
+    "h": 128,
+    "scale": 2
+  },
+  "dev-sequencer": {
+    "file": "assets/dev-sequencer.png",
+    "w": 70,
+    "h": 116,
+    "scale": 2
+  }
+}
