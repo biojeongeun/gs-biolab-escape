@@ -1513,7 +1513,30 @@ export class Game {
           // 캐릭터만 보간을 켠다. 전역은 nearest(픽셀아트 타일·.pix 캐릭터용)인데,
           // 고해상도 일러스트 캐릭터를 그 상태로 축소하면 가장자리가 계단처럼 부서진다.
           // (배경이 매끈한 카툰 아트일 때 캐릭터만 도트로 튀는 문제 — 2026-08-11)
-          ctx.imageSmoothingEnabled = true;
+          // 원본이 작은 도트 캐릭터(표시 배율 2 이상)는 보간을 끄고, 화면에서 원본 1픽셀이
+          // 정수 개의 실제 픽셀이 되도록 크기를 맞춘다 — 늘린 도트가 흐려지거나 들쭉날쭉 깨지지 않게.
+          // 고해상도 일러스트 캐릭터(배율 1)는 예전처럼 보간을 켠다.
+          const pixelArt = s >= 2;
+          ctx.imageSmoothingEnabled = !pixelArt;
+          if (pixelArt) {
+            const dpr = window.devicePixelRatio || 1;
+            const k = Math.max(1, Math.round(s * CAMERA_ZOOM * dpr)); // 원본 1px → 실제 k px
+            const unit = k / (CAMERA_ZOOM * dpr); // 줌 좌표에서 원본 1px의 크기
+            const pw = img.width * unit;
+            const ph = img.height * unit;
+            const snap = (v: number) => Math.round(v * CAMERA_ZOOM * dpr) / (CAMERA_ZOOM * dpr);
+            if (this.collapseAt !== null) {
+              const t = Math.min(1, (performance.now() - this.collapseAt) / 700);
+              ctx.save();
+              ctx.translate(snap(ox + sx), snap(oy + sy + 8));
+              ctx.rotate((-Math.PI / 2) * t * t);
+              ctx.drawImage(img, snap(-pw / 2), -ph, pw, ph);
+              ctx.restore();
+              return;
+            }
+            ctx.drawImage(img, snap(ox + sx - pw / 2), snap(oy + sy + 8 - ph), pw, ph);
+            return;
+          }
           if (this.collapseAt !== null) {
             // 발끝을 축으로 0.7초 동안 옆으로 쓰러진다 (가속 — 툭 꺾이는 느낌)
             const k = Math.min(1, (performance.now() - this.collapseAt) / 700);
